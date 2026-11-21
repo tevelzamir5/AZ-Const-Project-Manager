@@ -72,10 +72,17 @@ main{max-width:1100px;margin:0 auto;padding:22px 20px 80px}
 .stat .k{font-size:13px;color:var(--muted);font-weight:600}
 .stat .v{font-size:26px;font-weight:800;margin-top:2px}
 .stat .v.red{color:var(--red)}
-.pipe{display:grid;grid-template-columns:repeat(6,1fr) 1.15fr;gap:8px;margin-bottom:16px}
+.pipe{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
 .pipe .insp{background:var(--blue-soft);border-color:#c9d8f2}
 .pipe .insp .pl{color:var(--blue)}
 .k-insp{background:#e2f3f3;color:#0b6c6c}
+.hbtn.on{background:#4a515c;box-shadow:inset 0 -3px 0 var(--accent)}
+.xc{display:grid;grid-template-columns:110px 1fr 1fr 32px;gap:8px;align-items:center}
+.xc .in{padding:7px 9px}
+.xcadd{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.sitegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.panel.mid{width:min(680px,100%);background:#fff}
+.xcrow{display:grid;grid-template-columns:1fr 1fr 1fr 32px;gap:6px;margin-bottom:6px}
 button.step{font:inherit;text-align:right;cursor:pointer}
 button.step:hover{border-color:var(--accent)}
 button.step:disabled{cursor:default}
@@ -218,7 +225,7 @@ ol.steps-ol{margin:0;padding-right:20px;line-height:1.8}
   .g3{grid-template-columns:1fr 1fr}.g3 b{grid-column:1/-1}
   .task{flex-wrap:wrap}.task .t{flex:1 1 calc(100% - 40px)}.task .date{flex:1 1 0;min-width:0;margin-right:29px}
   .day{min-height:54px}.ev{font-size:0;height:5px;padding:0}
-  .stats{grid-template-columns:1fr 1fr}.pipe{grid-template-columns:repeat(2,1fr)}.inspbox{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}.pipe{grid-template-columns:repeat(2,1fr)}.inspbox{grid-template-columns:1fr}.sitegrid{grid-template-columns:1fr}.xc,.xcadd,.xcrow{grid-template-columns:1fr 1fr}.xc .icon{justify-self:end}
   .tbl .hide-m{display:none}
 }
 </style>
@@ -230,6 +237,7 @@ ol.steps-ol{margin:0;padding-right:20px;line-height:1.8}
   <div class="spacer"></div>
   <button class="hbtn" data-a="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>יומן</span></button>
   <button class="hbtn" data-a="directory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h4l2 5-3 2a11 11 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><span>אנשי קשר</span></button>
+  <button class="hbtn" id="inspBtn" data-a="insptab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><span>אישורים ובדיקות</span></button>
   <button class="hbtn primary edit-only" data-a="new">+ פרויקט חדש</button>
   <span class="who" id="who"></span><button class="hbtn hidden" id="logoutBtn" data-a="logout" title="התנתקות">יציאה</button>
 </div></header>
@@ -285,7 +293,22 @@ const pct = p => p.contractAmount ? Math.round((Number(p.paidAmount)||0) / Numbe
 const isInsp = p => p.type === 'inspection';
 const active = () => S.projects.filter(p => !p.done);
 const activeWf = () => active().filter(p => !isInsp(p));
-const activeInsp = () => active().filter(isInsp);
+const activeInsp = () => S.projects.filter(isInsp);
+const nextInsp = p => p.nextInspection || p.inspDate || '';
+function expChip(d){
+  if (!d) return '<span class="muted">—</span>';
+  const n = daysTo(d);
+  if (n < 0) return `<span class="chip red">פג תוקף ב-${fmtD(d)}</span>`;
+  if (n <= 30) return `<span class="chip amber">בתוקף עד ${fmtD(d)} (עוד ${n} ימים)</span>`;
+  return `<span class="chip green">בתוקף עד ${fmtD(d)}</span>`;
+}
+function nextChip(d){
+  if (!d) return '<span class="muted">—</span>';
+  const n = daysTo(d);
+  if (n < 0) return `<span class="chip red">${fmtD(d)} · באיחור</span>`;
+  if (n <= 14) return `<span class="chip amber">${fmtD(d)} · עוד ${n} ימים</span>`;
+  return `<span class="chip">${fmtD(d)}</span>`;
+}
 const lastReport = p => (p.reports||[]).slice().sort((a,b) => String(b.date).localeCompare(String(a.date)) || (b.at||0) - (a.at||0))[0];
 function inspChip(st){ st = st || INSP_STATUS[0]; const c = st === 'אושר' ? 'green' : st.startsWith('נדחה') ? 'red' : st === INSP_STATUS[0] ? '' : 'amber'; return `<span class="chip ${c}">${esc(st)}</span>`; }
 const openTasks = p => (p.subtasks||[]).filter(t => !t.done);
@@ -409,12 +432,12 @@ function render(){
 function lock(root){ if (S.ro) root.querySelectorAll('input,select,textarea').forEach(i => { if (i.id !== 'dirQ') i.disabled = true; }); }
 function renderTabs(){
   const r = route(); const cp = r.id ? S.projects.find(p => p.id === r.id) : null;
-  const cur = cp ? (cp.done ? 'done' : isInsp(cp) ? 'insp' : cp.stage||0) : r.done ? 'done' : r.insp ? 'insp' : r.home ? 'home' : r.tab;
+  const cur = cp ? (isInsp(cp) ? 'insp' : cp.done ? 'done' : cp.stage||0) : r.done ? 'done' : r.insp ? 'insp' : r.home ? 'home' : r.tab;
   const W = activeWf(), sep = '<span class="tab" style="padding:0"><span class="sep"></span></span>';
-  $('#tabs').innerHTML = `<button class="tab home ${cur==='home'?'on':''}" data-a="home">ראשי<span class="c">${active().length}</span></button>${sep}`
+  $('#tabs').innerHTML = `<button class="tab home ${cur==='home'?'on':''}" data-a="home">ראשי<span class="c">${W.length}</span></button>${sep}`
     + STAGES.map((s,i) => `<button class="tab ${i===cur?'on':''}" data-a="tab" data-i="${i}"><span class="n">${i+1}</span>${s.tab}<span class="c">${W.filter(p => (p.stage||0) === i).length}</span></button>`).join('')
-    + `${sep}<button class="tab ${cur==='insp'?'on':''}" data-a="insptab">🔍 ${INSP_TITLE}<span class="c">${activeInsp().length}</span></button>`
-    + `${sep}<button class="tab ${cur==='done'?'on':''}" data-a="donetab">✓ הושלמו<span class="c">${S.projects.length - active().length}</span></button>`;
+    + `${sep}<button class="tab ${cur==='done'?'on':''}" data-a="donetab">✓ הושלמו<span class="c">${S.projects.filter(p => p.done && !isInsp(p)).length}</span></button>`;
+  const b = $('#inspBtn'); if (b) b.classList.toggle('on', cur === 'insp');
 }
 
 /* ----- home ----- */
@@ -424,11 +447,11 @@ function stageCell(p){
   return `<div class="segs">${STAGES.map((_,i) => `<i class="${i<st?'on':i===st?'cur':''}"></i>`).join('')}</div><span class="sm">${st+1}. ${STAGES[st].tab}</span>`;
 }
 function homeView(){
-  const P = active(), W = activeWf(), I = activeInsp();
+  const P = activeWf(), W = P;
   const late = P.filter(p => (p.deadline && daysTo(p.deadline) < 0) || lateTasks(p).length).length;
   const tasks = P.reduce((a,p) => a + openTasks(p).length, 0);
   const due = P.reduce((a,p) => a + Math.max(0, (Number(p.contractAmount)||0) - (Number(p.paidAmount)||0)), 0);
-  const rows = W.slice().sort((a,b) => ((a.stage||0) - (b.stage||0)) || String(a.deadline||'9').localeCompare(String(b.deadline||'9'))).concat(I);
+  const rows = W.slice().sort((a,b) => ((a.stage||0) - (b.stage||0)) || String(a.deadline||'9').localeCompare(String(b.deadline||'9')));
   const up = calItems().filter(i => { const d = daysTo(i.date); return d >= 0 && d <= 7; }).sort(byDateTime).slice(0, 8);
   return `<div class="stage-h"><h1>סיכום פרויקטים פתוחים</h1><p>${new Date().toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p></div>
   <div class="stats">
@@ -437,8 +460,7 @@ function homeView(){
     <div class="stat"><div class="k">משימות פתוחות</div><div class="v">${tasks}</div></div>
     <div class="stat"><div class="k">יתרה לגבייה</div><div class="v">${money(due)}</div></div>
   </div>
-  <div class="pipe">${STAGES.map((s,i) => `<button data-a="tab" data-i="${i}"><span class="pn">${W.filter(p => (p.stage||0) === i).length}</span><span class="pl">${i+1}. ${s.tab}</span></button>`).join('')}
-    <button class="insp" data-a="insptab"><span class="pn">${I.length}</span><span class="pl">🔍 ${INSP_TITLE}</span></button></div>
+  <div class="pipe">${STAGES.map((s,i) => `<button data-a="tab" data-i="${i}"><span class="pn">${W.filter(p => (p.stage||0) === i).length}</span><span class="pl">${i+1}. ${s.tab}</span></button>`).join('')}</div>
   ${rows.length ? `<table class="tbl"><thead><tr><th>פרויקט</th><th>שלב נוכחי</th><th>תאריך יעד</th><th class="hide-m">משימות פתוחות</th><th class="hide-m">עדכון אחרון</th></tr></thead><tbody>
     ${rows.map(p => { const lt = lateTasks(p).length, lr = lastReport(p); return `<tr data-a="open" data-id="${esc(p.id)}">
       <td><b>${esc(p.name||'ללא שם')}</b><div class="muted sm">${esc([p.clientName, p.location].filter(Boolean).join(' · '))}</div></td>
@@ -471,17 +493,29 @@ function card(p){
   </div>`;
 }
 function inspView(){
-  const ps = activeInsp().sort((a,b) => String(a.inspDate||'9').localeCompare(String(b.inspDate||'9')));
-  return `<div class="ptop" style="align-items:flex-end"><div class="stage-h" style="flex:1;margin:0"><h1>🔍 ${INSP_TITLE}</h1><p>פרויקטים שצריכים רק בדיקה הנדסית ואישור באתר (פארקי נינג׳ה, קירות טיפוס וכדומה) — מחוץ לתהליך העבודה הרגיל.</p></div>
-    <button class="btn primary edit-only" data-a="new" data-type="inspection">+ בדיקה חדשה</button></div>
-  ${ps.length ? `<div class="cards">${ps.map(card).join('')}</div>` : `<div class="empty"><b>אין בדיקות פתוחות</b>לחץ על "+ בדיקה חדשה" כדי להוסיף.</div>`}`;
+  const ps = activeInsp().slice().sort((a,b) => String(a.approvalExpiry||'9999').localeCompare(String(b.approvalExpiry||'9999')));
+  const expired = ps.filter(p => p.approvalExpiry && daysTo(p.approvalExpiry) < 0).length;
+  const soon = ps.filter(p => p.approvalExpiry && daysTo(p.approvalExpiry) >= 0 && daysTo(p.approvalExpiry) <= 30).length;
+  return `<div class="ptop" style="align-items:flex-end"><div class="stage-h" style="flex:1;margin:0"><h1>אישורים ובדיקות</h1>
+      <p>אתרים שדורשים בדיקה הנדסית ואישור תקופתי (פארקי נינג׳ה, קירות טיפוס ועוד) — בנפרד מתהליך הפרויקטים.</p></div>
+    <button class="btn primary edit-only" data-a="addsite">+ הוספת אתר</button></div>
+  ${ps.length ? `<div class="row" style="margin-bottom:12px"><span class="chip">${ps.length} אתרים</span>${expired ? `<span class="chip red">${expired} פג תוקף</span>` : ''}${soon ? `<span class="chip amber">${soon} פג תוקף ב-30 הימים הקרובים</span>` : ''}</div>
+  <table class="tbl"><thead><tr><th>אתר</th><th class="hide-m">סוג מתקן / ציוד</th><th class="hide-m">בדיקה אחרונה</th><th>תוקף האישור</th><th>בדיקה הבאה</th><th class="hide-m">דוחות</th></tr></thead><tbody>
+    ${ps.map(p => `<tr data-a="open" data-id="${esc(p.id)}">
+      <td><b>${esc(p.name||'ללא שם')}</b><div class="muted sm">${esc(p.location||'')}</div></td>
+      <td class="hide-m">${esc(p.facility||'—')}</td>
+      <td class="hide-m">${p.lastInspection ? fmtD(p.lastInspection) : '<span class="muted">—</span>'}</td>
+      <td>${expChip(p.approvalExpiry)}</td>
+      <td>${nextChip(nextInsp(p))}</td>
+      <td class="hide-m">${(p.docs||[]).length ? `📄 ${(p.docs||[]).length}` : '<span class="muted">—</span>'}</td></tr>`).join('')}
+  </tbody></table>` : `<div class="empty"><b>עדיין אין אתרים</b>לחץ על "+ הוספת אתר" כדי להוסיף את האתר הראשון.</div>`}`;
 }
 function doneView(){
-  const ps = S.projects.filter(p => p.done).sort((a,b) => (b.doneAt||0) - (a.doneAt||0));
+  const ps = S.projects.filter(p => p.done && !isInsp(p)).sort((a,b) => (b.doneAt||0) - (a.doneAt||0));
   return `<div class="stage-h"><h1>פרויקטים שהושלמו</h1><p>${ps.length ? `${ps.length} פרויקטים` : ''}</p></div>
-  ${ps.length ? `<table class="tbl"><thead><tr><th>פרויקט</th><th>סוג</th><th>הושלם בתאריך</th><th class="hide-m">חוזה</th><th></th></tr></thead><tbody>
+  ${ps.length ? `<table class="tbl"><thead><tr><th>פרויקט</th><th>הושלם בתאריך</th><th class="hide-m">חוזה</th><th></th></tr></thead><tbody>
     ${ps.map(p => `<tr data-a="open" data-id="${esc(p.id)}"><td><b>${esc(p.name)}</b><div class="muted sm">${esc([p.clientName, p.location].filter(Boolean).join(' · '))}</div></td>
-      <td class="sm">${isInsp(p) ? INSP_TITLE : 'תהליך מלא'}</td><td>${fmtTs(p.doneAt)}</td><td class="hide-m">${p.contractAmount ? money(p.contractAmount) : '—'}</td>
+      <td>${fmtTs(p.doneAt)}</td><td class="hide-m">${p.contractAmount ? money(p.contractAmount) : '—'}</td>
       <td style="text-align:left"><button class="btn sm edit-only" data-a="reopen" data-id="${esc(p.id)}">החזר לפעילות</button></td></tr>`).join('')}
   </tbody></table>` : '<div class="empty"><b>עדיין אין פרויקטים שהושלמו</b>כשפרויקט מסתיים, לחץ בו על "סמן כהושלם".</div>'}`;
 }
@@ -501,10 +535,53 @@ function reportsBox(p){
       <div class="rt">${esc(r.text)}</div></div>`).join('')}
   </div>`;
 }
+function xcBox(p){
+  const xs = p.extraContacts || [];
+  return `${xs.map(c => `<div class="xc">
+      <input class="in" data-xc="${esc(c.id)}" data-xf="role" value="${esc(c.role||'')}" placeholder="תפקיד" style="font-weight:600">
+      <input class="in" data-xc="${esc(c.id)}" data-xf="name" value="${esc(c.name||'')}" placeholder="שם">
+      <input class="in" type="tel" data-xc="${esc(c.id)}" data-xf="phone" value="${esc(c.phone||'')}" placeholder="טלפון">
+      <button class="icon edit-only" data-a="delxc" data-xcid="${esc(c.id)}" title="הסר איש קשר">${TRASH}</button></div>`).join('')}
+    <form class="xcadd edit-only" data-f="xc">
+      <input class="in" name="role" placeholder="תפקיד (חשמלאי, מודד…)" required>
+      <input class="in" name="name" placeholder="שם">
+      <input class="in" type="tel" name="phone" placeholder="טלפון">
+      <button class="btn sm">+ הוסף איש קשר</button></form>`;
+}
+function docsBox(p, title){
+  const docs = p.docs || [];
+  return `<div class="box"><h2>${title} <span class="muted">${docs.length}</span></h2>
+    ${docs.map(d => `<div class="doc"><span class="ic">PDF</span><button class="nm" data-a="viewdoc" data-did="${esc(d.id)}" title="פתח בלשונית חדשה">${esc(d.name)}</button><span class="muted sm">${fmtTs(d.at)}${d.size ? ' · ' + fmtSize(d.size) : ''}</span><button class="icon" style="color:var(--blue)" data-a="dldoc" data-did="${esc(d.id)}" title="הורדה">⬇</button><button class="icon edit-only" data-a="deldoc" data-did="${esc(d.id)}" title="מחק">${TRASH}</button></div>`).join('') || '<div class="muted sm">אין קבצים מצורפים.</div>'}
+    ${S.mode === 'cloud' ? `<button class="btn edit-only" style="margin-top:10px" data-a="upload">+ צרף קובץ PDF</button><div class="muted sm" style="margin-top:6px">עד 25MB לקובץ.</div>` : '<div class="hint">העלאת קבצים תפעל אחרי חיבור המערכת ל-Firebase.</div>'}
+  </div>`;
+}
+function siteView(p){
+  return `<button class="btn link" data-a="insptab">→ חזרה לאישורים ובדיקות</button>
+  <div class="ptop">
+    <div style="flex:1;min-width:220px"><h1>${esc(p.name || 'ללא שם')}</h1><div class="muted">${esc(p.location||'')}${p.facility ? ' · ' + esc(p.facility) : ''}</div></div>
+    <div class="row">${expChip(p.approvalExpiry)}<button class="btn link edit-only" style="color:var(--red)" data-a="delsite" data-id="${esc(p.id)}">מחק אתר</button></div>
+  </div>
+  <div class="box" style="border-top:3px solid var(--blue)"><h2>פרטי האתר</h2>
+    <div class="sitegrid">
+      <div><label class="f">שם האתר</label>${inp('name', p.name)}</div>
+      <div><label class="f">כתובת</label>${inp('location', p.location)}</div>
+      <div><label class="f">סוג מתקן / ציוד</label>${inp('facility', p.facility, {ph:'לדוגמה: קיר טיפוס, פארק נינג׳ה'})}</div>
+      <div><label class="f">תאריך הבדיקה האחרונה</label>${inp('lastInspection', p.lastInspection, {type:'date'})}</div>
+      <div><label class="f">תוקף האישור הנוכחי</label>${inp('approvalExpiry', p.approvalExpiry, {type:'date'})}</div>
+      <div><label class="f">הבדיקה הבאה מתוכננת ל-</label>${inp('nextInspection', nextInsp(p), {type:'date'})}</div>
+    </div>
+    <div style="margin-top:12px"><label class="f">הערות</label><textarea class="in" rows="2" data-pf="description" placeholder="הערות על האתר…">${esc(p.description||'')}</textarea></div>
+  </div>
+  <div class="pgrid">
+    <div>${docsBox(p, 'דוחות פיקוח (PDF)')}</div>
+    <div><div class="box"><h2>אנשי קשר באתר</h2>${xcBox(p)}</div></div>
+  </div>`;
+}
 function projectView(id){
   const p = S.projects.find(x => x.id === id);
   if (!p) return `<button class="btn link" data-a="home">→ חזרה</button><div class="empty"><b>הפרויקט לא נמצא</b>ייתכן שהוא נמחק.</div>`;
-  const st = p.stage||0, insp = isInsp(p);
+  if (isInsp(p)) return siteView(p);
+  const st = p.stage||0, insp = false;
   const open = openTasks(p).sort((a,b) => String(a.deadline||'9').localeCompare(String(b.deadline||'9')));
   const arch = (p.subtasks||[]).filter(t => t.done).sort((a,b) => (b.doneAt||0) - (a.doneAt||0));
   const docs = p.docs||[];
@@ -563,6 +640,7 @@ function projectView(id){
       </div>
       <div class="box"><h2>אנשי קשר בפרויקט</h2>
         <div style="display:grid;gap:8px">${ROLES.map(([k,l]) => `<div class="g3"><b>${l}</b>${inp(`contacts.${k}.name`, getPath(p,`contacts.${k}.name`), {ph:'שם'})}${inp(`contacts.${k}.phone`, getPath(p,`contacts.${k}.phone`), {type:'tel', ph:'טלפון'})}</div>`).join('')}</div>
+        ${xcBox(p)}
       </div>
       <div class="box"><h2>תיקיית הפרויקט במחשב</h2>
         <div class="cline">${inp('folderPath', p.folderPath, {ph:'C:\\פרויקטים\\שם הפרויקט'})}
@@ -586,13 +664,13 @@ function renderOv(){
   lock(o);
   if (keep){ const q = $('#dirQ'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
 }
-function formOv({title, body, ok='שמירה', danger=false, onOk, extra=''}){
+function formOv({title, body, ok='שמירה', danger=false, onOk, extra='', size='narrow'}){
   ovKind = 'form';
   const o = $('#ov'); o.classList.remove('hidden');
-  o.innerHTML = `<form class="panel narrow" id="fm"><div class="panel-h"><h2>${esc(title)}</h2></div><div class="panel-b">${body}</div>
+  o.innerHTML = `<form class="panel ${size}" id="fm"><div class="panel-h"><h2>${esc(title)}</h2></div><div class="panel-b">${body}</div>
     <div class="panel-f">${ok ? `<button class="btn ${danger?'danger':'primary'}">${esc(ok)}</button>` : ''}<button type="button" class="btn" data-a="close">${ok ? 'ביטול' : 'סגור'}</button><span style="flex:1"></span>${extra}</div></form>`;
   const f = $('#fm');
-  f.onsubmit = e => { e.preventDefault(); const fd = Object.fromEntries(new FormData(f)); closeOv(); onOk && onOk(fd); };
+  f.onsubmit = e => { e.preventDefault(); const fd = Object.fromEntries(new FormData(f)); const rows = [...f.querySelectorAll('.xcrow')].map(r => ({role:r.querySelector('[name=xrole]').value.trim(), name:r.querySelector('[name=xname]').value.trim(), phone:r.querySelector('[name=xphone]').value.trim()})); const fi = f.querySelector('input[type=file]'); const files = fi ? [...fi.files] : []; closeOv(); onOk && onOk(fd, rows, files); };
   const i = f.querySelector('input:not([readonly]),textarea'); if (i) i.focus();
 }
 const confirmOv = (msg, fn) => formOv({title:'בטוח?', body:`<p style="margin:0">${esc(msg)}</p>`, ok:'מחק', danger:true, onOk:fn});
@@ -602,14 +680,18 @@ const byDateTime = (a,b) => (a.date + (a.time||'99')).localeCompare(b.date + (b.
 function calItems(){
   const out = [];
   S.events.forEach(e => e.date && out.push({date:e.date, time:e.time||'', title:e.title, kind:'event', id:e.id, pid:e.projectId}));
-  active().forEach(p => {
+  activeInsp().forEach(p => {
+    if (nextInsp(p)) out.push({date:nextInsp(p), title:'בדיקה מתוכננת · ' + (p.name||''), kind:'insp', pid:p.id});
+    if (p.approvalExpiry) out.push({date:p.approvalExpiry, title:'תוקף אישור מסתיים · ' + (p.name||''), kind:'deadline', pid:p.id});
+  });
+  activeWf().forEach(p => {
     if (p.deadline) out.push({date:p.deadline, title:'יעד: ' + (p.name||''), kind:'deadline', pid:p.id});
     openTasks(p).forEach(t => t.deadline && out.push({date:t.deadline, title:t.title + ' · ' + (p.name||''), kind:'task', pid:p.id}));
-    if (isInsp(p) && p.inspDate) out.push({date:p.inspDate, title:'בדיקה באתר · ' + (p.name||''), kind:'insp', pid:p.id});
+
   });
   return out;
 }
-const KIND = {event:'פגישה', deadline:'יעד פרויקט', task:'משימה', insp:'בדיקה באתר'};
+const KIND = {event:'פגישה', deadline:'יעד', task:'משימה', insp:'בדיקה באתר'};
 function calRow(x, inCal){
   const pr = x.pid && S.projects.find(p => p.id === x.pid);
   return `<div class="item"><span class="tm">${esc(x.time||'')}</span><span class="ev k-${x.kind}">${KIND[x.kind]}</span>
@@ -638,7 +720,7 @@ function calView(){
         <div class="add" style="margin:0;flex-wrap:wrap">
           <input class="in" name="title" placeholder="נושא הפגישה…" required style="flex:2 1 220px">
           <input class="in" type="time" name="time" style="flex:0 0 120px" title="שעה">
-          <select class="in" name="projectId" style="flex:1 1 160px"><option value="">ללא פרויקט</option>${active().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select>
+          <select class="in" name="projectId" style="flex:1 1 160px"><option value="">ללא פרויקט</option>${S.projects.filter(p => !p.done).map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select>
           <button class="btn primary">הוסף</button>
         </div>
       </form>
@@ -713,6 +795,21 @@ function toast(m, act){
   const box = $('#toasts'); box.appendChild(t); while (box.children.length > 2) box.firstChild.remove();
   setTimeout(() => t.remove(), act ? 6000 : 3000);
 }
+const xcRowHtml = () => `<div class="xcrow"><input class="in" name="xrole" placeholder="תפקיד"><input class="in" name="xname" placeholder="שם"><input class="in" type="tel" name="xphone" placeholder="טלפון"><button type="button" class="icon" data-a="delxcrow" title="הסר">${TRASH}</button></div>`;
+function siteForm(){
+  return `<div style="display:grid;gap:12px">
+    <div class="g2"><div><label class="f">שם האתר</label><input class="in" name="name" required placeholder="לדוגמה: פארק נינג׳ה — קניון הנגב"></div>
+      <div><label class="f">כתובת</label><input class="in" name="location"></div></div>
+    <div><label class="f">סוג מתקן / ציוד</label><input class="in" name="facility" placeholder="לדוגמה: קיר טיפוס, מסלול נינג׳ה, מתקני חבלים"></div>
+    <div class="g2"><div><label class="f">תאריך הבדיקה האחרונה</label><input class="in" type="date" name="lastInspection"></div>
+      <div><label class="f">תוקף האישור הנוכחי</label><input class="in" type="date" name="approvalExpiry"></div></div>
+    <div class="g2"><div><label class="f">הבדיקה הבאה מתוכננת ל-</label><input class="in" type="date" name="nextInspection"></div><div></div></div>
+    <div><label class="f">אנשי קשר</label><div id="xcRows">${xcRowHtml()}</div>
+      <button type="button" class="btn sm" data-a="addxcrow">+ איש קשר נוסף</button></div>
+    <div><label class="f">דוח פיקוח (PDF)</label><input class="in" type="file" name="report" accept="application/pdf,.pdf">
+      <div class="muted sm" style="margin-top:4px">${S.mode === 'cloud' ? 'אפשר לצרף עוד דוחות אחר כך מדף האתר. עד 25MB.' : 'העלאת קבצים תפעל אחרי חיבור המערכת ל-Firebase.'}</div></div>
+  </div>`;
+}
 function pForm(p, type){
   return `<div style="display:grid;gap:12px">
     ${type !== undefined ? `<div class="typesel">
@@ -738,8 +835,8 @@ async function copyText(t){
   try { await navigator.clipboard.writeText(t); toast('הנתיב הועתק — הדבק בסייר הקבצים'); }
   catch(e){ formOv({title:'העתקת נתיב', ok:'', body:`<input class="in" id="cp" value="${esc(t)}" readonly style="direction:ltr"><p class="muted sm">לחץ Ctrl+C כדי להעתיק.</p>`}); const c = $('#cp'); c.focus(); c.select(); }
 }
-async function upload(files){
-  const p = curP(); if (!p || S.mode !== 'cloud') return;
+async function upload(files, pid){
+  const p = S.projects.find(x => x.id === pid) || curP(); if (!p || S.mode !== 'cloud') return;
   const pdfs = [...files].filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
   if (!pdfs.length){ toast('אפשר לצרף קבצי PDF בלבד.'); return; }
   const added = [];
@@ -764,7 +861,7 @@ function setDone(id, done){
   toast(done ? `"${p.name}" סומן כהושלם` : `"${p.name}" חזר לפעילות`, {label:'בטל', fn:() => { const q = S.projects.find(x => x.id === id); if (q) upd(q, {done:!done, doneAt: !done ? Date.now() : null}); }});
 }
 
-const READONLY_OK = new Set(['home','tab','donetab','insptab','open','openx','calendar','directory','close','day','mon','copy','viewdoc','dldoc','opener','logout']);
+const READONLY_OK = new Set(['home','tab','donetab','insptab','addxcrow','delxcrow','open','openx','calendar','directory','close','day','mon','copy','viewdoc','dldoc','opener','logout']);
 const A = {
   home: () => { closeOv(); go(''); },
   tab: el => { closeOv(); go('stage-' + (+el.dataset.i + 1)); },
@@ -775,8 +872,8 @@ const A = {
   calendar: () => openOv('calendar'),
   directory: () => openOv('directory'),
   close: () => closeOv(),
-  new: el => formOv({title: el.dataset.type === 'inspection' ? 'בדיקה חדשה' : 'פרויקט חדש', body:pForm({}, el.dataset.type || 'workflow'), ok:'צור', onOk: fd => {
-      const id = Store.newId('projects'), insp = fd.type === 'inspection';
+  new: el => formOv({title:'פרויקט חדש', body:pForm({}), ok:'צור פרויקט', onOk: fd => {
+      const id = Store.newId('projects'), insp = false;
       Store.set('projects', id, Object.assign({name:fd.name.trim(), clientName:fd.clientName.trim(), location:fd.location.trim(), type: insp ? 'inspection' : 'workflow', wf:WF, stage:0, done:false, description:'', deadline:'',
         contractAmount:null, paidAmount:null, contacts:{client:{name:fd.clientName.trim()}}, subtasks:[], docs:[], reports:[], folderPath:'', createdAt:Date.now(), updatedAt:Date.now()},
         insp ? {inspStatus:INSP_STATUS[0], inspDate:'', approvalDate:'', facility:''} : {}));
@@ -787,6 +884,17 @@ const A = {
   delp: el => { const p = S.projects.find(x => x.id === el.dataset.id); if (!p) return; closeOv();
       confirmOv(`למחוק את "${p.name}"? לא ניתן לבטל.`, () => { (p.docs||[]).forEach(d => d.fid && deleteFile(d.fid)); Store.remove('projects', p.id); go(''); toast('הפרויקט נמחק'); }); },
   move: (el, e) => { e.stopPropagation(); moveStage(el.dataset.id, +el.dataset.to); },
+  addsite: () => formOv({title:'הוספת אתר', size:'mid', ok:'שמור אתר', body:siteForm(), onOk: (fd, rows, files) => {
+      const id = Store.newId('projects');
+      Store.set('projects', id, {type:'inspection', name:fd.name.trim(), location:fd.location.trim(), facility:fd.facility.trim(), lastInspection:fd.lastInspection||'', approvalExpiry:fd.approvalExpiry||'', nextInspection:fd.nextInspection||'',
+        extraContacts: rows.filter(r => r.role || r.name || r.phone).map(r => Object.assign({id:rid()}, r)), docs:[], description:'', done:false, wf:WF, createdAt:Date.now(), updatedAt:Date.now()});
+      go('p-' + id); toast('האתר נוסף');
+      if (files.length) setTimeout(() => upload(files, id), 300); }}),
+  addxcrow: () => { const box = $('#xcRows'); if (box) box.insertAdjacentHTML('beforeend', xcRowHtml()); },
+  delxcrow: el => { const r = el.closest('.xcrow'); if (r) r.remove(); },
+  delsite: el => { const p = S.projects.find(x => x.id === el.dataset.id); if (!p) return;
+      confirmOv(`למחוק את האתר "${p.name}" ואת כל הקבצים שלו? לא ניתן לבטל.`, () => { (p.docs||[]).forEach(d => d.fid && deleteFile(d.fid)); Store.remove('projects', p.id); go('insp'); toast('האתר נמחק'); }); },
+  delxc: el => { const p = curP(); if (p) upd(p, {extraContacts:(p.extraContacts||[]).filter(c => c.id !== el.dataset.xcid)}); },
   back: el => { const p = S.projects.find(x => x.id === el.dataset.id); if (p) backChooser(p); },
   goto: el => { const p = S.projects.find(x => x.id === el.dataset.id); if (!p) return; const to = +el.dataset.to;
       formOv({title: to < (p.stage||0) ? 'החזרה לשלב קודם' : 'העברה לשלב', ok:'העבר', body:`<p style="margin:0">להעביר את "${esc(p.name)}" לשלב ${to+1}: ${STAGES[to].tab}?</p>`, onOk: () => moveStage(p.id, to)}); },
@@ -819,14 +927,15 @@ document.addEventListener('click', e => {
 document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('arch')) UI.archOpen = e.target.open; }, true);
 document.addEventListener('change', e => {
   const el = e.target;
-  if (el.id === 'fileIn'){ upload(el.files); el.value = ''; return; }
+  if (el.id === 'fileIn'){ const p = curP(); if (p) upload([...el.files], p.id); el.value = ''; return; }
   const p = curP(); if (!p) return;
-  if (el.dataset.pf){ let v = el.value.trim(); if (el.dataset.num) v = v === '' ? null : Math.max(0, Number(v)); if (getPath(p, el.dataset.pf) === v) return; upd(p, nest(el.dataset.pf.split('.'), v)); }
+  if (el.dataset.pf){ let v = el.value.trim(); if (el.dataset.pf === 'name' && !v){ render(); return; } if (el.dataset.num) v = v === '' ? null : Math.max(0, Number(v)); if (getPath(p, el.dataset.pf) === v) return; upd(p, nest(el.dataset.pf.split('.'), v)); }
   if (el.dataset.tdone){
     const done = el.checked, id = el.dataset.tdone;
     upd(p, {subtasks:(p.subtasks||[]).map(t => t.id === id ? Object.assign({}, t, {done, doneAt: done ? Date.now() : null}) : t)});
     toast(done ? 'המשימה בוצעה ועברה לארכיון' : 'המשימה חזרה לרשימה הפתוחה');
   }
+  if (el.dataset.xc){ const v = el.value.trim(); upd(p, {extraContacts:(p.extraContacts||[]).map(c => c.id === el.dataset.xc ? Object.assign({}, c, {[el.dataset.xf]:v}) : c)}); return; }
   if (el.dataset.tdate) upd(p, {subtasks:(p.subtasks||[]).map(t => t.id === el.dataset.tdate ? Object.assign({}, t, {deadline:el.value}) : t)});
 });
 document.addEventListener('submit', e => {
@@ -835,6 +944,8 @@ document.addEventListener('submit', e => {
   if (f.dataset.f === 'task' && p){ const title = fd.title.trim(); if (!title) return;
     upd(p, {subtasks:(p.subtasks||[]).concat({id:rid(), title, deadline:fd.deadline||'', done:false})});
     setTimeout(() => { const i = document.querySelector('[data-f=task] [name=title]'); if (i) i.focus(); }, 30); }
+  if (f.dataset.f === 'xc' && p){ const c = {id:rid(), role:fd.role.trim(), name:fd.name.trim(), phone:fd.phone.trim()}; if (!c.role) return;
+    upd(p, {extraContacts:(p.extraContacts||[]).concat(c)}); toast('איש הקשר נוסף'); }
   if (f.dataset.f === 'report' && p){ const text = (fd.text||'').trim(); if (!text) return;
     const by = fbAuth && fbAuth.currentUser && fbAuth.currentUser.email ? fbAuth.currentUser.email.split('@')[0] : '';
     upd(p, {reports:(p.reports||[]).concat({id:rid(), date:fd.date || today(), text, by, at:Date.now()})}); toast('דוח הסטטוס נשמר'); }
