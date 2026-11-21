@@ -324,7 +324,6 @@ function dueChip(d){
   if (n <= 14) return `<span class="chip amber">עוד ${n} ימים</span>`;
   return `<span class="chip">יעד: ${fmtD(d)}</span>`;
 }
-const folderHref = p => 'azfolder:' + encodeURIComponent(p);
 
 /* ===== storage ===== */
 const S = { projects:[], events:[], directory:[], mode:'loading', ro:false, assets:null, downloads:null, loaded:{} };
@@ -491,7 +490,7 @@ function card(p){
     <div class="row">${insp ? inspChip(p.inspStatus) + (p.inspDate ? `<span class="chip">בדיקה: ${fmtD(p.inspDate)}</span>` : '') : ''}${dueChip(p.deadline)}${open ? `<span class="chip">${open} משימות פתוחות</span>` : ''}${late ? `<span class="chip red">${late} באיחור</span>` : ''}</div>
     ${lr ? `<div class="lastrep">📝 ${fmtD(lr.date)} — ${esc(lr.text)}</div>` : ''}
     ${p.contractAmount ? `<div class="bar"><i style="width:${Math.min(100,pct(p))}%"></i></div><div class="muted sm">שולם ${pct(p)}% מתוך ${money(p.contractAmount)}</div>` : ''}
-    <div class="foot"><span class="muted sm">${p.folderPath ? '📁 יש תיקייה' : ''}</span>
+    <div class="foot"><span></span>
       ${!insp && st < LAST ? `<button class="btn sm edit-only" data-a="move" data-id="${esc(p.id)}" data-to="${st+1}">לשלב הבא ←</button>` : `<button class="btn sm green edit-only" data-a="markdone" data-id="${esc(p.id)}">✓ סמן כהושלם</button>`}</div>
   </div>`;
 }
@@ -654,11 +653,6 @@ function projectView(id){
         <div style="display:grid;gap:8px">${ROLES.map(([k,l]) => `<div class="g3"><b>${l}</b>${inp(`contacts.${k}.name`, getPath(p,`contacts.${k}.name`), {ph:'שם'})}${inp(`contacts.${k}.phone`, getPath(p,`contacts.${k}.phone`), {type:'tel', ph:'טלפון'})}</div>`).join('')}</div>
         ${xcBox(p)}
       </div>
-      <div class="box"><h2>תיקיית הפרויקט במחשב</h2>
-        <div class="cline">${inp('folderPath', p.folderPath, {ph:'C:\\פרויקטים\\שם הפרויקט'})}
-          ${p.folderPath ? `<a class="btn accent sm" href="${esc(folderHref(p.folderPath))}">📂 פתח תיקייה</a><button class="btn sm" data-a="copy" data-t="${esc(p.folderPath)}">העתק נתיב</button>` : ''}</div>
-        <div class="hint">הכפתור "פתח תיקייה" עובד אחרי <button data-a="opener">התקנה חד-פעמית קטנה</button> בכל מחשב (פחות מדקה). בלי ההתקנה — "העתק נתיב" והדבק בסייר הקבצים.</div>
-      </div>
     </div>
   </div>`;
 }
@@ -785,17 +779,6 @@ async function deleteFile(fid){
   try { const m = await fs.collection('files').doc(fid).get(); const n = m.exists ? m.data().chunks : 0;
     for (let i = 0; i < n; i++) await fs.collection('fileChunks').doc(fid + '_' + i).delete();
     await fs.collection('files').doc(fid).delete(); } catch(e){ console.error(e); }
-}
-function openerHelp(){
-  formOv({title:'פתיחת תיקיות ישירות מהמערכת', ok:'', body:`
-    <p style="margin-top:0;line-height:1.6">דפדפנים לא מורשים לפתוח תיקיות במחשב בעצמם. התקנה קטנה (פעם אחת בכל מחשב Windows) מוסיפה את האפשרות:</p>
-    <ol class="steps-ol">
-      <li><a class="btn sm accent" href="AZ-Folder-Opener.zip" download>⬇ הורד את קובץ ההתקנה</a></li>
-      <li>לחיצה ימנית על הקובץ ← "חלץ הכל".</li>
-      <li>לחיצה כפולה על <b>install.cmd</b>. אם Windows מזהיר — "מידע נוסף" ← "הפעל בכל זאת".</li>
-      <li>בפעם הראשונה שתלחץ "פתח תיקייה", הדפדפן ישאל אם לפתוח — סמן "תמיד אפשר" ואשר.</li>
-    </ol>
-    <p class="muted sm" style="margin-bottom:0">ללא הרשאות מנהל. פותח רק תיקיות קיימות. להסרה: uninstall.cmd.</p>`});
 }
 
 /* ===== actions ===== */
@@ -925,7 +908,6 @@ const A = {
   deldoc: el => { const p = curP(); const d = p && (p.docs||[]).find(x => x.id === el.dataset.did); if (!d) return;
       confirmOv(`למחוק את "${d.name}"?`, async () => { const q = curP() || p; await upd(q, {docs:(q.docs||[]).filter(x => x.id !== d.id)}); if (d.fid) deleteFile(d.fid); }); },
   copy: el => copyText(el.dataset.t),
-  opener: () => openerHelp(),
   day: el => { UI.cal.sel = el.dataset.d; const d = parseD(el.dataset.d); UI.cal.y = d.getFullYear(); UI.cal.m = d.getMonth(); renderOv(); },
   mon: el => { const k = +el.dataset.d; if (!k){ UI.cal = null; } else { const d = new Date(UI.cal.y, UI.cal.m + k, 1); UI.cal.y = d.getFullYear(); UI.cal.m = d.getMonth(); } renderOv(); },
   delev: el => Store.remove('events', el.dataset.id),
