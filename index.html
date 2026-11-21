@@ -75,6 +75,9 @@ main{max-width:1100px;margin:0 auto;padding:22px 20px 80px}
 .pipe{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
 .pipe .insp{background:var(--blue-soft);border-color:#c9d8f2}
 .pipe .insp .pl{color:var(--blue)}
+.seg{display:inline-flex;background:var(--soft);border-radius:8px;padding:3px}
+.seg button{border:0;background:none;padding:6px 14px;border-radius:6px;font-weight:600;font-size:14px;color:var(--ink2)}
+.seg button.on{background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);color:var(--ink)}
 .k-insp{background:#e2f3f3;color:#0b6c6c}
 .hbtn.on{background:#4a515c;box-shadow:inset 0 -3px 0 var(--accent)}
 .xc{display:grid;grid-template-columns:110px 1fr 1fr 32px;gap:8px;align-items:center}
@@ -493,13 +496,21 @@ function card(p){
   </div>`;
 }
 function inspView(){
-  const ps = activeInsp().slice().sort((a,b) => String(a.approvalExpiry||'9999').localeCompare(String(b.approvalExpiry||'9999')));
+  let ps = activeInsp().slice().sort((a,b) => String(a.approvalExpiry||'9999').localeCompare(String(b.approvalExpiry||'9999')));
   const expired = ps.filter(p => p.approvalExpiry && daysTo(p.approvalExpiry) < 0).length;
   const soon = ps.filter(p => p.approvalExpiry && daysTo(p.approvalExpiry) >= 0 && daysTo(p.approvalExpiry) <= 30).length;
-  return `<div class="ptop" style="align-items:flex-end"><div class="stage-h" style="flex:1;margin:0"><h1>אישורים ובדיקות</h1>
-      <p>אתרים שדורשים בדיקה הנדסית ואישור תקופתי (פארקי נינג׳ה, קירות טיפוס ועוד) — בנפרד מתהליך הפרויקטים.</p></div>
+  const f = UI.siteFilter || 'all';
+  const isExp = p => p.approvalExpiry && daysTo(p.approvalExpiry) < 0;
+  const isValid = p => p.approvalExpiry && daysTo(p.approvalExpiry) >= 0;
+  const all = ps;
+  ps = f === 'expired' ? all.filter(isExp) : f === 'valid' ? all.filter(isValid) : all;
+  const fb = (k, label, n) => `<button type="button" class="${f===k?'on':''}" data-a="sitefilter" data-v="${k}">${label} (${n})</button>`;
+  return `<div class="ptop" style="align-items:flex-end"><div class="stage-h" style="flex:1;margin:0"><h1>אישורים ובדיקות</h1></div>
     <button class="btn primary edit-only" data-a="addsite">+ הוספת אתר</button></div>
-  ${ps.length ? `<div class="row" style="margin-bottom:12px"><span class="chip">${ps.length} אתרים</span>${expired ? `<span class="chip red">${expired} פג תוקף</span>` : ''}${soon ? `<span class="chip amber">${soon} פג תוקף ב-30 הימים הקרובים</span>` : ''}</div>
+  ${all.length ? `<div class="row" style="margin-bottom:12px;justify-content:space-between">
+    <div class="seg">${fb('all','הכל',all.length)}${fb('valid','בתוקף',all.filter(isValid).length)}${fb('expired','פג תוקף',all.filter(isExp).length)}</div>
+    ${soon ? `<span class="chip amber">${soon} פג תוקף ב-30 הימים הקרובים</span>` : ''}</div>` : ''}
+  ${ps.length ? `
   <table class="tbl"><thead><tr><th>אתר</th><th class="hide-m">סוג מתקן / ציוד</th><th class="hide-m">בדיקה אחרונה</th><th>תוקף האישור</th><th>בדיקה הבאה</th><th class="hide-m">דוחות</th></tr></thead><tbody>
     ${ps.map(p => `<tr data-a="open" data-id="${esc(p.id)}">
       <td><b>${esc(p.name||'ללא שם')}</b><div class="muted sm">${esc(p.location||'')}</div></td>
@@ -508,7 +519,8 @@ function inspView(){
       <td>${expChip(p.approvalExpiry)}</td>
       <td>${nextChip(nextInsp(p))}</td>
       <td class="hide-m">${(p.docs||[]).length ? `📄 ${(p.docs||[]).length}` : '<span class="muted">—</span>'}</td></tr>`).join('')}
-  </tbody></table>` : `<div class="empty"><b>עדיין אין אתרים</b>לחץ על "+ הוספת אתר" כדי להוסיף את האתר הראשון.</div>`}`;
+  </tbody></table>` : all.length ? `<div class="empty"><b>אין אתרים ${f==='expired'?'שפג תוקפם':'בתוקף'}</b>${f==='valid'?'אתרים בלי תאריך תוקף לא מופיעים כאן.':''}</div>`
+    : `<div class="empty"><b>עדיין אין אתרים</b>לחץ על "+ הוספת אתר" כדי להוסיף את האתר הראשון.</div>`}`;
 }
 function doneView(){
   const ps = S.projects.filter(p => p.done && !isInsp(p)).sort((a,b) => (b.doneAt||0) - (a.doneAt||0));
@@ -861,7 +873,7 @@ function setDone(id, done){
   toast(done ? `"${p.name}" סומן כהושלם` : `"${p.name}" חזר לפעילות`, {label:'בטל', fn:() => { const q = S.projects.find(x => x.id === id); if (q) upd(q, {done:!done, doneAt: !done ? Date.now() : null}); }});
 }
 
-const READONLY_OK = new Set(['home','tab','donetab','insptab','addxcrow','delxcrow','open','openx','calendar','directory','close','day','mon','copy','viewdoc','dldoc','opener','logout']);
+const READONLY_OK = new Set(['sitefilter','home','tab','donetab','insptab','addxcrow','delxcrow','open','openx','calendar','directory','close','day','mon','copy','viewdoc','dldoc','opener','logout']);
 const A = {
   home: () => { closeOv(); go(''); },
   tab: el => { closeOv(); go('stage-' + (+el.dataset.i + 1)); },
@@ -890,6 +902,7 @@ const A = {
         extraContacts: rows.filter(r => r.role || r.name || r.phone).map(r => Object.assign({id:rid()}, r)), docs:[], description:'', done:false, wf:WF, createdAt:Date.now(), updatedAt:Date.now()});
       go('p-' + id); toast('האתר נוסף');
       if (files.length) setTimeout(() => upload(files, id), 300); }}),
+  sitefilter: el => { UI.siteFilter = el.dataset.v; render(); },
   addxcrow: () => { const box = $('#xcRows'); if (box) box.insertAdjacentHTML('beforeend', xcRowHtml()); },
   delxcrow: el => { const r = el.closest('.xcrow'); if (r) r.remove(); },
   delsite: el => { const p = S.projects.find(x => x.id === el.dataset.id); if (!p) return;
