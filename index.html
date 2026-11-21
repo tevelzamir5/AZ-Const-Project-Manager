@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 <style>
 :root{
   --bg:#f4f3ef; --card:#fff; --ink:#1c2026; --ink2:#4b535d; --muted:#858c95; --line:#e4e1d9; --soft:#f0eee8;
@@ -38,7 +37,7 @@ header{background:#1c2026;color:#fff}
 
 .tabsbar{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
 .tabs{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;gap:2px;overflow-x:auto}
-.tab{border:0;background:none;padding:14px 12px 12px;font-weight:600;color:var(--ink2);border-bottom:3px solid transparent;white-space:nowrap;display:flex;gap:7px;align-items:center}
+.tab{border:0;background:none;padding:14px 8px 12px;font-size:14px;font-weight:600;color:var(--ink2);border-bottom:3px solid transparent;white-space:nowrap;display:flex;gap:7px;align-items:center}
 .tab:hover{color:var(--ink)}
 .tab.on{color:var(--ink);border-bottom-color:var(--accent)}
 .tab .n{width:22px;height:22px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-size:12px;font-weight:700}
@@ -73,7 +72,24 @@ main{max-width:1100px;margin:0 auto;padding:22px 20px 80px}
 .stat .k{font-size:13px;color:var(--muted);font-weight:600}
 .stat .v{font-size:26px;font-weight:800;margin-top:2px}
 .stat .v.red{color:var(--red)}
-.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.pipe{display:grid;grid-template-columns:repeat(6,1fr) 1.15fr;gap:8px;margin-bottom:16px}
+.pipe .insp{background:var(--blue-soft);border-color:#c9d8f2}
+.pipe .insp .pl{color:var(--blue)}
+.k-insp{background:#e2f3f3;color:#0b6c6c}
+button.step{font:inherit;text-align:right;cursor:pointer}
+button.step:hover{border-color:var(--accent)}
+button.step:disabled{cursor:default}
+.inspbox{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.report{padding:12px 0;border-top:1px solid var(--soft)}
+.report:first-of-type{border-top:0}
+.report .rh{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.report .rh b{font-size:14px}
+.report .rt{white-space:pre-wrap;line-height:1.55}
+.lastrep{font-size:13px;color:var(--ink2);background:var(--soft);border-radius:8px;padding:6px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.typesel{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.typesel label{border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.typesel label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.typesel small{display:block;color:var(--muted);font-size:12px}
 .pipe button{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:right;display:flex;flex-direction:column;gap:2px}
 .pipe button:hover{border-color:var(--accent)}
 .pipe .pn{font-size:24px;font-weight:800}
@@ -195,12 +211,14 @@ ol.steps-ol{margin:0;padding-right:20px;line-height:1.8}
   .who{display:none}
   .pgrid{grid-template-columns:1fr}
   .hbtn span{display:none}
-  .brand span{display:none}
+  .brand{display:none}
+  .hwrap{gap:6px;padding:12px}
+  .hbtn{padding:8px 10px}
   .g2{grid-template-columns:1fr}
   .g3{grid-template-columns:1fr 1fr}.g3 b{grid-column:1/-1}
   .task{flex-wrap:wrap}.task .t{flex:1 1 calc(100% - 40px)}.task .date{flex:1 1 0;min-width:0;margin-right:29px}
   .day{min-height:54px}.ev{font-size:0;height:5px;padding:0}
-  .stats{grid-template-columns:1fr 1fr}.pipe{grid-template-columns:repeat(3,1fr)}
+  .stats{grid-template-columns:1fr 1fr}.pipe{grid-template-columns:repeat(2,1fr)}.inspbox{grid-template-columns:1fr}
   .tbl .hide-m{display:none}
 }
 </style>
@@ -213,7 +231,7 @@ ol.steps-ol{margin:0;padding-right:20px;line-height:1.8}
   <button class="hbtn" data-a="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>יומן</span></button>
   <button class="hbtn" data-a="directory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h4l2 5-3 2a11 11 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><span>אנשי קשר</span></button>
   <button class="hbtn primary edit-only" data-a="new">+ פרויקט חדש</button>
-  <span class="who" id="who"></span><button class="hbtn hidden" id="logoutBtn" data-a="logout" title="התנתקות"><span>יציאה</span></button>
+  <span class="who" id="who"></span><button class="hbtn hidden" id="logoutBtn" data-a="logout" title="התנתקות">יציאה</button>
 </div></header>
 <div class="tabsbar"><nav class="tabs" id="tabs"></nav></div>
 <div id="banner"></div>
@@ -234,10 +252,16 @@ const STAGES = [
   {tab:'ייזום ואיסוף חומרים', title:'ייזום הפרויקט ואיסוף חומרים'},
   {tab:'תכנון מקדים', title:'תכנון מקדים והלבשת תכניות'},
   {tab:'סטטיקה וממ״ד', title:'חישובים סטטיים ותכנון ממ״ד לאישור פיקוד העורף'},
+  {tab:'תכניות ביצוע', title:'הכנת תכניות ביצוע'},
   {tab:'פיקוח באתר', title:'פיקוח צוות התכנון באתר'},
   {tab:'סיום ומסירה', title:'סיום הפרויקט ומסירה'}
 ];
-const ROLES = [['architect','אדריכל'],['client','לקוח'],['contractor','קבלן']];
+const LAST = STAGES.length - 1;
+const WF = 2; // גרסת תהליך העבודה (6 שלבים)
+const ROLES = [['architect','אדריכל'],['client','לקוח'],['contractor','קבלן'],['supervisor','מפקח באתר'],['geotech','יועץ קרקע'],['landscape','אדריכל נוף']];
+const INSP_STATUS = ['ממתין לבדיקה','בדיקה נקבעה','נבדק — ממתין לאישור','אושר','נדחה — נדרש תיקון'];
+const INSP_TITLE = 'אישורים ובדיקות';
+const CHUNK = 560 * 1024; // בתים לכל חלק של קובץ
 const TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
 const CFG = window.AZ_FIREBASE || {};
 
@@ -258,7 +282,12 @@ const getPath = (o, p) => p.split('.').reduce((a,k) => a == null ? a : a[k], o);
 const nest = (path, v) => { const o = {}; let c = o; path.forEach((k,i) => { if (i === path.length-1) c[k] = v; else c = c[k] = {}; }); return o; };
 function deepMerge(t, p){ for (const k in p){ const v = p[k]; if (v && typeof v === 'object' && !Array.isArray(v) && t[k] && typeof t[k] === 'object' && !Array.isArray(t[k])) deepMerge(t[k], v); else t[k] = clone(v); } return t; }
 const pct = p => p.contractAmount ? Math.round((Number(p.paidAmount)||0) / Number(p.contractAmount) * 100) : 0;
+const isInsp = p => p.type === 'inspection';
 const active = () => S.projects.filter(p => !p.done);
+const activeWf = () => active().filter(p => !isInsp(p));
+const activeInsp = () => active().filter(isInsp);
+const lastReport = p => (p.reports||[]).slice().sort((a,b) => String(b.date).localeCompare(String(a.date)) || (b.at||0) - (a.at||0))[0];
+function inspChip(st){ st = st || INSP_STATUS[0]; const c = st === 'אושר' ? 'green' : st.startsWith('נדחה') ? 'red' : st === INSP_STATUS[0] ? '' : 'amber'; return `<span class="chip ${c}">${esc(st)}</span>`; }
 const openTasks = p => (p.subtasks||[]).filter(t => !t.done);
 const lateTasks = p => openTasks(p).filter(t => t.deadline && daysTo(t.deadline) < 0);
 function dueChip(d){
@@ -273,8 +302,8 @@ const folderHref = p => 'azfolder:' + encodeURIComponent(p);
 
 /* ===== storage ===== */
 const S = { projects:[], events:[], directory:[], mode:'loading', ro:false, assets:null, downloads:null, loaded:{} };
-const UI = { cal:null, dirQ:'', archOpen:false };
-let fbAuth = null, fs = null, fst = null;
+const UI = { cal:null, dirQ:'', archOpen:false, migrated:{} };
+let fbAuth = null, fs = null;
 const Store = {
   db:null, local:null, cbs:{}, q:{}, started:false,
   async init(){
@@ -287,7 +316,6 @@ const Store = {
     S.mode = 'cloud';
     firebase.initializeApp(CFG);
     fbAuth = firebase.auth(); fs = firebase.firestore();
-    try { if (CFG.storageBucket && firebase.storage) fst = firebase.storage(); } catch(e){ fst = null; }
     this.db = fs;
     fbAuth.onAuthStateChanged(user => { if (user) this.afterLogin(user); else if (this.started) location.reload(); else showLogin(); });
   },
@@ -300,7 +328,7 @@ const Store = {
   },
   startAll(){
     if (this.started) return; this.started = true;
-    this.listen('projects', a => S.projects = a.sort((x,y) => (y.createdAt||0) - (x.createdAt||0)));
+    this.listen('projects', a => { S.projects = a.sort((x,y) => (y.createdAt||0) - (x.createdAt||0)); setTimeout(migrate, 0); });
     this.listen('events', a => S.events = a);
     this.listen('directory', a => S.directory = a.sort((x,y) => String(x.name).localeCompare(String(y.name), 'he')));
   },
@@ -325,6 +353,16 @@ const Store = {
   update(col, id, p){ if (S.mode === 'local'){ const t = (this.local[col] ||= {}); t[id] = deepMerge(t[id] || {}, p); this.save(); this.emit(col); return Promise.resolve(); } return this.w(col, id, () => this.db.collection(col).doc(id).set(p, {merge:true})); },
   remove(col, id){ if (S.mode === 'local'){ delete (this.local[col]||{})[id]; this.save(); this.emit(col); return Promise.resolve(); } return this.w(col, id, () => this.db.collection(col).doc(id).delete()); }
 };
+/* העברת פרויקטים קיימים לתהליך עם 6 שלבים (נוסף שלב "תכניות ביצוע") — פעם אחת לכל פרויקט */
+function migrate(){
+  if (S.ro) return;
+  S.projects.forEach(p => {
+    if (isInsp(p) || p.wf === WF || UI.migrated[p.id]) return;
+    UI.migrated[p.id] = true;
+    const st = p.stage || 0;
+    Store.update('projects', p.id, {stage: st >= 3 ? st + 1 : st, wf: WF});
+  });
+}
 function showLogin(){
   $('#login').classList.remove('hidden');
   const f = $('#loginForm'); f.querySelector('input').focus();
@@ -353,7 +391,8 @@ function route(){
   const h = location.hash.slice(1);
   if (h.startsWith('p-')) return {id:h.slice(2)};
   if (h === 'done') return {done:true};
-  const m = h.match(/^stage-([1-5])$/);
+  if (h === 'insp') return {insp:true};
+  const m = h.match(/^stage-([1-6])$/);
   return m ? {tab:+m[1]-1} : {home:true};
 }
 window.addEventListener('hashchange', () => { render(); window.scrollTo(0,0); });
@@ -363,27 +402,33 @@ function render(){
   renderTabs();
   const r = route(), m = $('#main');
   m.innerHTML = !S.loaded.projects ? '<div class="empty">טוען פרויקטים…</div>'
-    : r.id ? projectView(r.id) : r.done ? doneView() : r.home ? homeView() : listView(r.tab);
+    : r.id ? projectView(r.id) : r.done ? doneView() : r.insp ? inspView() : r.home ? homeView() : listView(r.tab);
   lock(m);
   if (ovKind === 'calendar' || ovKind === 'directory') renderOv();
 }
 function lock(root){ if (S.ro) root.querySelectorAll('input,select,textarea').forEach(i => { if (i.id !== 'dirQ') i.disabled = true; }); }
 function renderTabs(){
   const r = route(); const cp = r.id ? S.projects.find(p => p.id === r.id) : null;
-  const cur = cp ? (cp.done ? 'done' : cp.stage||0) : r.done ? 'done' : r.home ? 'home' : r.tab;
-  const act = active();
-  $('#tabs').innerHTML = `<button class="tab home ${cur==='home'?'on':''}" data-a="home">ראשי<span class="c">${act.length}</span></button><span class="tab" style="padding:0"><span class="sep"></span></span>`
-    + STAGES.map((s,i) => `<button class="tab ${i===cur?'on':''}" data-a="tab" data-i="${i}"><span class="n">${i+1}</span>${s.tab}<span class="c">${act.filter(p => (p.stage||0) === i).length}</span></button>`).join('')
-    + `<span class="tab" style="padding:0"><span class="sep"></span></span><button class="tab ${cur==='done'?'on':''}" data-a="donetab">✓ הושלמו<span class="c">${S.projects.length - act.length}</span></button>`;
+  const cur = cp ? (cp.done ? 'done' : isInsp(cp) ? 'insp' : cp.stage||0) : r.done ? 'done' : r.insp ? 'insp' : r.home ? 'home' : r.tab;
+  const W = activeWf(), sep = '<span class="tab" style="padding:0"><span class="sep"></span></span>';
+  $('#tabs').innerHTML = `<button class="tab home ${cur==='home'?'on':''}" data-a="home">ראשי<span class="c">${active().length}</span></button>${sep}`
+    + STAGES.map((s,i) => `<button class="tab ${i===cur?'on':''}" data-a="tab" data-i="${i}"><span class="n">${i+1}</span>${s.tab}<span class="c">${W.filter(p => (p.stage||0) === i).length}</span></button>`).join('')
+    + `${sep}<button class="tab ${cur==='insp'?'on':''}" data-a="insptab">🔍 ${INSP_TITLE}<span class="c">${activeInsp().length}</span></button>`
+    + `${sep}<button class="tab ${cur==='done'?'on':''}" data-a="donetab">✓ הושלמו<span class="c">${S.projects.length - active().length}</span></button>`;
 }
 
 /* ----- home ----- */
+function stageCell(p){
+  if (isInsp(p)) return `<span class="sm" style="color:var(--blue);font-weight:600">🔍 ${INSP_TITLE}</span><div style="margin-top:3px">${inspChip(p.inspStatus)}</div>`;
+  const st = p.stage||0;
+  return `<div class="segs">${STAGES.map((_,i) => `<i class="${i<st?'on':i===st?'cur':''}"></i>`).join('')}</div><span class="sm">${st+1}. ${STAGES[st].tab}</span>`;
+}
 function homeView(){
-  const P = active();
+  const P = active(), W = activeWf(), I = activeInsp();
   const late = P.filter(p => (p.deadline && daysTo(p.deadline) < 0) || lateTasks(p).length).length;
   const tasks = P.reduce((a,p) => a + openTasks(p).length, 0);
   const due = P.reduce((a,p) => a + Math.max(0, (Number(p.contractAmount)||0) - (Number(p.paidAmount)||0)), 0);
-  const rows = P.slice().sort((a,b) => ((a.stage||0) - (b.stage||0)) || String(a.deadline||'9').localeCompare(String(b.deadline||'9')));
+  const rows = W.slice().sort((a,b) => ((a.stage||0) - (b.stage||0)) || String(a.deadline||'9').localeCompare(String(b.deadline||'9'))).concat(I);
   const up = calItems().filter(i => { const d = daysTo(i.date); return d >= 0 && d <= 7; }).sort(byDateTime).slice(0, 8);
   return `<div class="stage-h"><h1>סיכום פרויקטים פתוחים</h1><p>${new Date().toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p></div>
   <div class="stats">
@@ -392,75 +437,106 @@ function homeView(){
     <div class="stat"><div class="k">משימות פתוחות</div><div class="v">${tasks}</div></div>
     <div class="stat"><div class="k">יתרה לגבייה</div><div class="v">${money(due)}</div></div>
   </div>
-  <div class="pipe">${STAGES.map((s,i) => `<button data-a="tab" data-i="${i}"><span class="pn">${P.filter(p => (p.stage||0) === i).length}</span><span class="pl">${i+1}. ${s.tab}</span></button>`).join('')}</div>
-  ${rows.length ? `<table class="tbl"><thead><tr><th>פרויקט</th><th>שלב נוכחי</th><th>תאריך יעד</th><th class="hide-m">משימות פתוחות</th><th class="hide-m">תשלום</th></tr></thead><tbody>
-    ${rows.map(p => { const st = p.stage||0, lt = lateTasks(p).length; return `<tr data-a="open" data-id="${esc(p.id)}">
+  <div class="pipe">${STAGES.map((s,i) => `<button data-a="tab" data-i="${i}"><span class="pn">${W.filter(p => (p.stage||0) === i).length}</span><span class="pl">${i+1}. ${s.tab}</span></button>`).join('')}
+    <button class="insp" data-a="insptab"><span class="pn">${I.length}</span><span class="pl">🔍 ${INSP_TITLE}</span></button></div>
+  ${rows.length ? `<table class="tbl"><thead><tr><th>פרויקט</th><th>שלב נוכחי</th><th>תאריך יעד</th><th class="hide-m">משימות פתוחות</th><th class="hide-m">עדכון אחרון</th></tr></thead><tbody>
+    ${rows.map(p => { const lt = lateTasks(p).length, lr = lastReport(p); return `<tr data-a="open" data-id="${esc(p.id)}">
       <td><b>${esc(p.name||'ללא שם')}</b><div class="muted sm">${esc([p.clientName, p.location].filter(Boolean).join(' · '))}</div></td>
-      <td><div class="segs">${STAGES.map((_,i) => `<i class="${i<st?'on':i===st?'cur':''}"></i>`).join('')}</div><span class="sm">${st+1}. ${STAGES[st].tab}</span></td>
+      <td>${stageCell(p)}</td>
       <td>${p.deadline ? dueChip(p.deadline) : '<span class="muted">—</span>'}</td>
       <td class="hide-m">${openTasks(p).length}${lt ? ` <span class="chip red">${lt} באיחור</span>` : ''}</td>
-      <td class="hide-m">${p.contractAmount ? `${pct(p)}% <span class="muted sm">מ-${money(p.contractAmount)}</span>` : '<span class="muted">—</span>'}</td></tr>`; }).join('')}
+      <td class="hide-m">${lr ? `<span class="sm">${fmtD(lr.date)}</span>` : '<span class="muted">—</span>'}</td></tr>`; }).join('')}
   </tbody></table>` : `<div class="empty"><b>אין פרויקטים פתוחים</b>לחץ על "+ פרויקט חדש" כדי להתחיל.</div>`}
   <h2 class="sec-h">השבוע הקרוב</h2>
-  <div class="box">${up.length ? up.map(x => calRow(x, false)).join('') : '<div class="muted sm">אין יעדים או פגישות ב-7 הימים הקרובים.</div>'}</div>`;
+  <div class="box">${up.length ? up.map(x => calRow(x, false)).join('') : '<div class="muted sm">אין יעדים, בדיקות או פגישות ב-7 הימים הקרובים.</div>'}</div>`;
 }
 
 /* ----- stage list ----- */
 function listView(i){
-  const ps = active().filter(p => (p.stage||0) === i);
+  const ps = activeWf().filter(p => (p.stage||0) === i);
   return `<div class="stage-h"><h1>שלב ${i+1}: ${STAGES[i].title}</h1><p>${ps.length ? `${ps.length} פרויקטים בשלב זה` : ''}</p></div>
   ${ps.length ? `<div class="cards">${ps.map(card).join('')}</div>`
    : `<div class="empty"><b>אין פרויקטים בשלב הזה</b>${i === 0 ? 'לחץ על "+ פרויקט חדש" כדי להתחיל.' : 'פרויקטים יופיעו כאן כשתעביר אותם לשלב הזה.'}</div>`}`;
 }
 function card(p){
-  const st = p.stage||0, open = openTasks(p).length, late = lateTasks(p).length;
+  const st = p.stage||0, open = openTasks(p).length, late = lateTasks(p).length, lr = lastReport(p), insp = isInsp(p);
   return `<div class="pcard" data-a="open" data-id="${esc(p.id)}">
     <h3>${esc(p.name || 'ללא שם')}</h3>
     ${p.clientName || p.location ? `<div class="muted sm">${esc([p.clientName, p.location].filter(Boolean).join(' · '))}</div>` : ''}
-    <div class="row">${dueChip(p.deadline)}${open ? `<span class="chip">${open} משימות פתוחות</span>` : ''}${late ? `<span class="chip red">${late} באיחור</span>` : ''}</div>
+    <div class="row">${insp ? inspChip(p.inspStatus) + (p.inspDate ? `<span class="chip">בדיקה: ${fmtD(p.inspDate)}</span>` : '') : ''}${dueChip(p.deadline)}${open ? `<span class="chip">${open} משימות פתוחות</span>` : ''}${late ? `<span class="chip red">${late} באיחור</span>` : ''}</div>
+    ${lr ? `<div class="lastrep">📝 ${fmtD(lr.date)} — ${esc(lr.text)}</div>` : ''}
     ${p.contractAmount ? `<div class="bar"><i style="width:${Math.min(100,pct(p))}%"></i></div><div class="muted sm">שולם ${pct(p)}% מתוך ${money(p.contractAmount)}</div>` : ''}
     <div class="foot"><span class="muted sm">${p.folderPath ? '📁 יש תיקייה' : ''}</span>
-      ${st < 4 ? `<button class="btn sm edit-only" data-a="move" data-id="${esc(p.id)}" data-to="${st+1}">לשלב הבא ←</button>` : `<button class="btn sm green edit-only" data-a="markdone" data-id="${esc(p.id)}">✓ סמן כהושלם</button>`}</div>
+      ${!insp && st < LAST ? `<button class="btn sm edit-only" data-a="move" data-id="${esc(p.id)}" data-to="${st+1}">לשלב הבא ←</button>` : `<button class="btn sm green edit-only" data-a="markdone" data-id="${esc(p.id)}">✓ סמן כהושלם</button>`}</div>
   </div>`;
+}
+function inspView(){
+  const ps = activeInsp().sort((a,b) => String(a.inspDate||'9').localeCompare(String(b.inspDate||'9')));
+  return `<div class="ptop" style="align-items:flex-end"><div class="stage-h" style="flex:1;margin:0"><h1>🔍 ${INSP_TITLE}</h1><p>פרויקטים שצריכים רק בדיקה הנדסית ואישור באתר (פארקי נינג׳ה, קירות טיפוס וכדומה) — מחוץ לתהליך העבודה הרגיל.</p></div>
+    <button class="btn primary edit-only" data-a="new" data-type="inspection">+ בדיקה חדשה</button></div>
+  ${ps.length ? `<div class="cards">${ps.map(card).join('')}</div>` : `<div class="empty"><b>אין בדיקות פתוחות</b>לחץ על "+ בדיקה חדשה" כדי להוסיף.</div>`}`;
 }
 function doneView(){
   const ps = S.projects.filter(p => p.done).sort((a,b) => (b.doneAt||0) - (a.doneAt||0));
   return `<div class="stage-h"><h1>פרויקטים שהושלמו</h1><p>${ps.length ? `${ps.length} פרויקטים` : ''}</p></div>
-  ${ps.length ? `<table class="tbl"><thead><tr><th>פרויקט</th><th>הושלם בתאריך</th><th class="hide-m">חוזה</th><th></th></tr></thead><tbody>
+  ${ps.length ? `<table class="tbl"><thead><tr><th>פרויקט</th><th>סוג</th><th>הושלם בתאריך</th><th class="hide-m">חוזה</th><th></th></tr></thead><tbody>
     ${ps.map(p => `<tr data-a="open" data-id="${esc(p.id)}"><td><b>${esc(p.name)}</b><div class="muted sm">${esc([p.clientName, p.location].filter(Boolean).join(' · '))}</div></td>
-      <td>${fmtTs(p.doneAt)}</td><td class="hide-m">${p.contractAmount ? money(p.contractAmount) : '—'}</td>
+      <td class="sm">${isInsp(p) ? INSP_TITLE : 'תהליך מלא'}</td><td>${fmtTs(p.doneAt)}</td><td class="hide-m">${p.contractAmount ? money(p.contractAmount) : '—'}</td>
       <td style="text-align:left"><button class="btn sm edit-only" data-a="reopen" data-id="${esc(p.id)}">החזר לפעילות</button></td></tr>`).join('')}
   </tbody></table>` : '<div class="empty"><b>עדיין אין פרויקטים שהושלמו</b>כשפרויקט מסתיים, לחץ בו על "סמן כהושלם".</div>'}`;
 }
 
 /* ----- project page ----- */
 const inp = (pf, v, o={}) => `<input class="in" type="${o.type||'text'}" data-pf="${pf}" ${o.type==='number'?'data-num="1" min="0" inputmode="numeric"':''} value="${esc(v ?? '')}" placeholder="${esc(o.ph||'')}">`;
+function reportsBox(p){
+  const reps = (p.reports||[]).slice().sort((a,b) => String(b.date).localeCompare(String(a.date)) || (b.at||0) - (a.at||0));
+  return `<div class="box"><h2>דוחות סטטוס <span class="muted">${reps.length}</span></h2>
+    <form class="edit-only" data-f="report" style="margin-bottom:${reps.length ? 14 : 0}px">
+      <div class="row" style="margin-bottom:8px"><label class="f" style="margin:0">תאריך</label><input class="in" type="date" name="date" value="${today()}" required style="width:170px"></div>
+      <textarea class="in" name="text" rows="3" placeholder="מה התקדם, מה נתקע, מה הצעדים הבאים…" required></textarea>
+      <button class="btn primary" style="margin-top:8px">שמור דוח</button>
+    </form>
+    ${reps.map(r => `<div class="report"><div class="rh"><b>${fmtD(r.date, {weekday:'short', day:'numeric', month:'numeric', year:'numeric'})}</b>${r.by ? `<span class="muted sm">· ${esc(r.by)}</span>` : ''}<span style="flex:1"></span>
+      <button class="btn link sm edit-only" data-a="editrep" data-rid="${esc(r.id)}">עריכה</button><button class="icon edit-only" data-a="delrep" data-rid="${esc(r.id)}" title="מחק">${TRASH}</button></div>
+      <div class="rt">${esc(r.text)}</div></div>`).join('')}
+  </div>`;
+}
 function projectView(id){
   const p = S.projects.find(x => x.id === id);
   if (!p) return `<button class="btn link" data-a="home">→ חזרה</button><div class="empty"><b>הפרויקט לא נמצא</b>ייתכן שהוא נמחק.</div>`;
-  const st = p.stage||0;
+  const st = p.stage||0, insp = isInsp(p);
   const open = openTasks(p).sort((a,b) => String(a.deadline||'9').localeCompare(String(b.deadline||'9')));
   const arch = (p.subtasks||[]).filter(t => t.done).sort((a,b) => (b.doneAt||0) - (a.doneAt||0));
   const docs = p.docs||[];
   const c = Number(p.contractAmount)||0, paid = Number(p.paidAmount)||0;
-  const canUp = S.mode === 'cloud' && !!fst;
-  return `
-  <button class="btn link" data-a="${p.done ? 'donetab' : 'tab'}" data-i="${st}">→ חזרה ${p.done ? 'לפרויקטים שהושלמו' : 'לשלב ' + (st+1)}</button>
+  const canUp = S.mode === 'cloud';
+  const back = p.done ? `<button class="btn link" data-a="donetab">→ חזרה לפרויקטים שהושלמו</button>`
+    : insp ? `<button class="btn link" data-a="insptab">→ חזרה ל${INSP_TITLE}</button>`
+    : `<button class="btn link" data-a="tab" data-i="${st}">→ חזרה לשלב ${st+1}</button>`;
+  return `${back}
   <div class="ptop">
-    <div style="flex:1;min-width:220px"><h1>${esc(p.name || 'ללא שם')}</h1><div class="muted">${esc([p.clientName, p.location].filter(Boolean).join(' · ') || '')}</div></div>
+    <div style="flex:1;min-width:220px"><h1>${esc(p.name || 'ללא שם')}</h1><div class="muted">${insp ? `🔍 ${INSP_TITLE}` : ''}${insp && (p.clientName || p.location) ? ' · ' : ''}${esc([p.clientName, p.location].filter(Boolean).join(' · ') || '')}</div></div>
     <div class="row">
       <button class="btn edit-only" data-a="edit" data-id="${esc(p.id)}">עריכת פרטים</button>
-      ${p.done ? '' : `<button class="btn ${st===4?'green':''} edit-only" data-a="markdone" data-id="${esc(p.id)}">✓ סמן כהושלם</button>
-      ${st < 4 ? `<button class="btn accent edit-only" data-a="move" data-id="${esc(p.id)}" data-to="${st+1}">העבר לשלב הבא: ${STAGES[st+1].tab} ←</button>` : ''}`}
+      ${p.done ? '' : `<button class="btn ${insp || st===LAST?'green':''} edit-only" data-a="markdone" data-id="${esc(p.id)}">✓ סמן כהושלם</button>
+      ${!insp && st > 0 ? `<button class="btn edit-only" data-a="back" data-id="${esc(p.id)}">→ החזר לשלב קודם</button>` : ''}
+      ${!insp && st < LAST ? `<button class="btn accent edit-only" data-a="move" data-id="${esc(p.id)}" data-to="${st+1}">העבר לשלב הבא: ${STAGES[st+1].tab} ←</button>` : ''}`}
     </div>
   </div>
   ${p.done ? `<div class="donebar">✓ הפרויקט הושלם ב-${fmtTs(p.doneAt)}<span style="flex:1"></span><button class="btn sm edit-only" data-a="reopen" data-id="${esc(p.id)}">החזר לפעילות</button></div>`
-    : `<div class="steps">${STAGES.map((s,i) => `<div class="step ${i<st?'done':i===st?'cur':''}"><span class="d">${i<st?'✓':i+1}</span>${s.tab}</div>`).join('')}</div>
-  ${st > 0 ? `<div style="margin:-10px 0 14px"><button class="btn link sm edit-only" data-a="move" data-id="${esc(p.id)}" data-to="${st-1}">→ החזר לשלב הקודם</button></div>` : ''}`}
+    : insp ? '' : `<div class="steps">${STAGES.map((s,i) => `<button class="step ${i<st?'done':i===st?'cur':''}" data-a="goto" data-id="${esc(p.id)}" data-to="${i}" ${i===st?'disabled':''} title="${i===st?'השלב הנוכחי':'העבר את הפרויקט לשלב הזה'}"><span class="d">${i<st?'✓':i+1}</span>${s.tab}</button>`).join('')}</div>`}
   <div class="pgrid">
     <div>
+      ${insp ? `<div class="box" style="border-top:3px solid var(--blue)"><h2>בדיקה ואישור ${inspChip(p.inspStatus)}</h2>
+        <div class="inspbox">
+          <div><label class="f">סטטוס</label><select class="in" data-pf="inspStatus">${INSP_STATUS.map(x => `<option ${(p.inspStatus||INSP_STATUS[0])===x?'selected':''}>${x}</option>`).join('')}</select></div>
+          <div><label class="f">תאריך הבדיקה באתר</label>${inp('inspDate', p.inspDate, {type:'date'})}</div>
+          <div><label class="f">תאריך האישור</label>${inp('approvalDate', p.approvalDate, {type:'date'})}</div>
+          <div><label class="f">סוג המתקן</label>${inp('facility', p.facility, {ph:'לדוגמה: קיר טיפוס, פארק נינג׳ה'})}</div>
+        </div></div>` : ''}
       <div class="box"><h2>תיאור הפרויקט</h2>
-        <textarea class="in" rows="4" data-pf="description" placeholder="מה קיים היום, ומה צריך לעשות…">${esc(p.description||'')}</textarea></div>
+        <textarea class="in" rows="4" data-pf="description" placeholder="${insp ? 'מה צריך לבדוק ולאשר…' : 'מה קיים היום, ומה צריך לעשות…'}">${esc(p.description||'')}</textarea></div>
+      ${reportsBox(p)}
       <div class="box"><h2>משימות <span class="muted">${open.length} פתוחות</span></h2>
         ${open.map(t => { const late = t.deadline && daysTo(t.deadline) < 0; return `<div class="task ${late?'late':''}">
           <input type="checkbox" data-tdone="${esc(t.id)}" title="סמן כבוצע (יעבור לארכיון)">
@@ -473,8 +549,8 @@ function projectView(id){
         </details>` : ''}
       </div>
       <div class="box"><h2>מסמכים (PDF) <span class="muted">${docs.length}</span></h2>
-        ${docs.map(d => `<div class="doc"><span class="ic">PDF</span><button class="nm" data-a="viewdoc" data-did="${esc(d.id)}" title="פתח בלשונית חדשה">${esc(d.name)}</button><span class="muted sm">${fmtTs(d.at)}</span><button class="icon edit-only" data-a="deldoc" data-did="${esc(d.id)}" title="מחק">${TRASH}</button></div>`).join('') || '<div class="muted sm">אין מסמכים מצורפים.</div>'}
-        ${canUp ? `<button class="btn" style="margin-top:10px" data-a="upload">+ צרף קובץ PDF</button>` : '<div class="hint">העלאת קבצים תפעל אחרי הפעלת Storage ב-Firebase (ראה מדריך).</div>'}
+        ${docs.map(d => `<div class="doc"><span class="ic">PDF</span><button class="nm" data-a="viewdoc" data-did="${esc(d.id)}" title="פתח בלשונית חדשה">${esc(d.name)}</button><span class="muted sm">${fmtTs(d.at)}${d.size ? ' · ' + fmtSize(d.size) : ''}</span><button class="icon" style="color:var(--blue)" data-a="dldoc" data-did="${esc(d.id)}" title="הורדה">⬇</button><button class="icon edit-only" data-a="deldoc" data-did="${esc(d.id)}" title="מחק">${TRASH}</button></div>`).join('') || '<div class="muted sm">אין מסמכים מצורפים.</div>'}
+        ${canUp ? `<button class="btn edit-only" style="margin-top:10px" data-a="upload">+ צרף קובץ PDF</button><div class="muted sm" style="margin-top:6px">עד 25MB לקובץ.</div>` : '<div class="hint">העלאת קבצים תפעל אחרי חיבור המערכת ל-Firebase.</div>'}
       </div>
     </div>
     <div>
@@ -529,10 +605,11 @@ function calItems(){
   active().forEach(p => {
     if (p.deadline) out.push({date:p.deadline, title:'יעד: ' + (p.name||''), kind:'deadline', pid:p.id});
     openTasks(p).forEach(t => t.deadline && out.push({date:t.deadline, title:t.title + ' · ' + (p.name||''), kind:'task', pid:p.id}));
+    if (isInsp(p) && p.inspDate) out.push({date:p.inspDate, title:'בדיקה באתר · ' + (p.name||''), kind:'insp', pid:p.id});
   });
   return out;
 }
-const KIND = {event:'פגישה', deadline:'יעד פרויקט', task:'משימה'};
+const KIND = {event:'פגישה', deadline:'יעד פרויקט', task:'משימה', insp:'בדיקה באתר'};
 function calRow(x, inCal){
   const pr = x.pid && S.projects.find(p => p.id === x.pid);
   return `<div class="item"><span class="tm">${esc(x.time||'')}</span><span class="ev k-${x.kind}">${KIND[x.kind]}</span>
@@ -553,7 +630,7 @@ function calView(){
   return `<div class="cal-h"><h3>${first.toLocaleDateString('he-IL', {month:'long', year:'numeric'})}</h3>
       <button class="btn sm" data-a="mon" data-d="-1">→</button><button class="btn sm" data-a="mon" data-d="0">היום</button><button class="btn sm" data-a="mon" data-d="1">←</button></div>
     <div class="cal">${cells}</div>
-    <div class="legend"><span><i class="k-event"></i>פגישות</span><span><i class="k-deadline"></i>יעדי פרויקטים</span><span><i class="k-task"></i>משימות</span></div>
+    <div class="legend"><span><i class="k-event"></i>פגישות</span><span><i class="k-deadline"></i>יעדי פרויקטים</span><span><i class="k-task"></i>משימות</span><span><i class="k-insp"></i>בדיקות באתר</span></div>
     <div class="box" style="margin:0"><h2>${fmtD(sel, {weekday:'long', day:'numeric', month:'long'})}</h2>
       ${(by[sel]||[]).map(x => calRow(x, true)).join('') || '<div class="muted sm">אין כלום ביום הזה.</div>'}
       <form class="edit-only" data-f="event" style="margin-top:14px;border-top:1px solid var(--soft);padding-top:14px">
@@ -586,12 +663,34 @@ function dirView(){
     <div class="box" style="margin:0"><input class="in" id="dirQ" placeholder="חיפוש לפי שם, תפקיד או טלפון…" value="${esc(UI.dirQ)}" style="margin-bottom:8px"><div id="dirList">${dirList()}</div></div>`;
 }
 
-/* PDF documents (Firebase Storage) */
-async function viewDoc(d){
-  if (!d.path || !fst){ toast('המסמך הזה הועלה בגרסה הקודמת — העלה אותו מחדש.'); return; }
-  const w = window.open('', '_blank');
-  try { const url = await fst.ref(d.path).getDownloadURL(); if (w) w.location = url; else location.href = url; }
-  catch(e){ if (w) w.close(); toast('לא הצלחנו לפתוח את המסמך'); }
+/* PDF documents — נשמרים בתוך Firestore בחלקים (עובד בתוכנית החינמית של Firebase) */
+const fmtSize = b => !b ? '' : b > 1048576 ? (b/1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(b/1024)) + 'KB';
+function toB64(u8){ let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+async function loadPdf(d){
+  if (!d.fid){ throw new Error('old'); }
+  const meta = await fs.collection('files').doc(d.fid).get();
+  if (!meta.exists) throw new Error('missing');
+  const n = meta.data().chunks;
+  const parts = await Promise.all(Array.from({length:n}, (_, i) => fs.collection('fileChunks').doc(d.fid + '_' + i).get()));
+  const bytes = parts.map(x => { const b = atob(x.data().data); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; });
+  return new Blob(bytes, {type:'application/pdf'});
+}
+async function viewDoc(d, download){
+  if (!d.fid){ toast('המסמך הזה הועלה בגרסה קודמת ולא נשמר — העלה אותו מחדש.'); return; }
+  const w = download ? null : window.open('', '_blank');
+  if (w) w.document.write('<p style="font-family:Arial;direction:rtl;padding:20px">טוען את המסמך…</p>');
+  try {
+    const blob = await loadPdf(d); const url = URL.createObjectURL(blob);
+    if (w) w.location.href = url;
+    else { const a = document.createElement('a'); a.href = url; a.download = d.name; document.body.appendChild(a); a.click(); a.remove(); }
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+  } catch(e){ console.error(e); if (w) w.close(); toast('לא הצלחנו לפתוח את המסמך'); }
+}
+async function deleteFile(fid){
+  if (!fs || !fid) return;
+  try { const m = await fs.collection('files').doc(fid).get(); const n = m.exists ? m.data().chunks : 0;
+    for (let i = 0; i < n; i++) await fs.collection('fileChunks').doc(fid + '_' + i).delete();
+    await fs.collection('files').doc(fid).delete(); } catch(e){ console.error(e); }
 }
 function openerHelp(){
   formOv({title:'פתיחת תיקיות ישירות מהמערכת', ok:'', body:`
@@ -614,12 +713,21 @@ function toast(m, act){
   const box = $('#toasts'); box.appendChild(t); while (box.children.length > 2) box.firstChild.remove();
   setTimeout(() => t.remove(), act ? 6000 : 3000);
 }
-function pForm(p){
+function pForm(p, type){
   return `<div style="display:grid;gap:12px">
+    ${type !== undefined ? `<div class="typesel">
+      <label><input type="radio" name="type" value="workflow" ${type!=='inspection'?'checked':''}><span>תהליך מלא<small>6 שלבים, מייזום ועד מסירה</small></span></label>
+      <label><input type="radio" name="type" value="inspection" ${type==='inspection'?'checked':''}><span>${INSP_TITLE} בלבד<small>בדיקה ואישור באתר — נינג׳ה, קיר טיפוס…</small></span></label></div>` : ''}
     <div><label class="f">שם הפרויקט</label><input class="in" name="name" required value="${esc(p.name||'')}" placeholder="לדוגמה: בית כהן — תוספת ממ״ד"></div>
     <div class="g2"><div><label class="f">לקוח</label><input class="in" name="clientName" value="${esc(p.clientName||'')}"></div>
     <div><label class="f">כתובת</label><input class="in" name="location" value="${esc(p.location||'')}"></div></div>
   </div>`;
+}
+function backChooser(p){
+  const st = p.stage||0;
+  formOv({title:'החזרה לשלב קודם', ok:'העבר', body:`<label class="f">לאיזה שלב להחזיר את "${esc(p.name)}"?</label>
+    <select class="in" name="to">${STAGES.slice(0, st).map((s,i) => `<option value="${i}" ${i===st-1?'selected':''}>${i+1}. ${s.tab}</option>`).join('')}</select>
+    <p class="muted sm" style="margin-bottom:0">המשימות, המסמכים והדוחות נשארים כפי שהם.</p>`, onOk: fd => moveStage(p.id, +fd.to)});
 }
 function moveStage(id, to){
   const p = S.projects.find(x => x.id === id); if (!p) return; const from = p.stage||0; if (from === to) return;
@@ -631,20 +739,24 @@ async function copyText(t){
   catch(e){ formOv({title:'העתקת נתיב', ok:'', body:`<input class="in" id="cp" value="${esc(t)}" readonly style="direction:ltr"><p class="muted sm">לחץ Ctrl+C כדי להעתיק.</p>`}); const c = $('#cp'); c.focus(); c.select(); }
 }
 async function upload(files){
-  const p = curP(); if (!p || !fst) return;
+  const p = curP(); if (!p || S.mode !== 'cloud') return;
   const pdfs = [...files].filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
   if (!pdfs.length){ toast('אפשר לצרף קבצי PDF בלבד.'); return; }
   const added = [];
   for (const f of pdfs){
-    if (f.size > 50*1048576){ toast(`${f.name} גדול מ-50MB`); continue; }
-    toast(`מעלה את ${f.name}…`);
-    const path = `docs/${p.id}/${rid()}.pdf`;
+    if (f.size > 25*1048576){ toast(`${f.name} גדול מ-25MB — אי אפשר לצרף אותו.`); continue; }
+    const fid = fs.collection('files').doc().id;
     try {
-      await fst.ref(path).put(f, {contentType:'application/pdf', contentDisposition:"inline; filename*=UTF-8''" + encodeURIComponent(f.name)});
-      added.push({id:rid(), name:f.name, path, size:f.size, at:Date.now()});
-    } catch(e){ console.error(e); toast(`ההעלאה של ${f.name} נכשלה`); }
+      const u8 = new Uint8Array(await f.arrayBuffer()); const n = Math.max(1, Math.ceil(u8.length / CHUNK));
+      for (let i = 0; i < n; i++){
+        toast(`מעלה את ${f.name}… ${Math.round(i / n * 100)}%`);
+        await fs.collection('fileChunks').doc(fid + '_' + i).set({fid, i, data: toB64(u8.subarray(i*CHUNK, (i+1)*CHUNK))});
+      }
+      await fs.collection('files').doc(fid).set({name:f.name, size:f.size, chunks:n, projectId:p.id, at:Date.now(), by:(fbAuth && fbAuth.currentUser && fbAuth.currentUser.email) || ''});
+      added.push({id:fid, fid, name:f.name, size:f.size, at:Date.now()});
+    } catch(e){ console.error(e); toast(`ההעלאה של ${f.name} נכשלה`); deleteFile(fid); }
   }
-  if (added.length){ const cur = S.projects.find(x => x.id === p.id) || p; await upd(cur, {docs:(cur.docs||[]).concat(added)}); toast('המסמך צורף'); }
+  if (added.length){ const cur = S.projects.find(x => x.id === p.id) || p; await upd(cur, {docs:(cur.docs||[]).concat(added)}); toast(added.length > 1 ? `${added.length} מסמכים צורפו` : 'המסמך צורף'); }
 }
 function setDone(id, done){
   const p = S.projects.find(x => x.id === id); if (!p) return;
@@ -652,27 +764,37 @@ function setDone(id, done){
   toast(done ? `"${p.name}" סומן כהושלם` : `"${p.name}" חזר לפעילות`, {label:'בטל', fn:() => { const q = S.projects.find(x => x.id === id); if (q) upd(q, {done:!done, doneAt: !done ? Date.now() : null}); }});
 }
 
-const READONLY_OK = new Set(['home','tab','donetab','open','openx','calendar','directory','close','day','mon','copy','viewdoc','dldoc','opener','logout']);
+const READONLY_OK = new Set(['home','tab','donetab','insptab','open','openx','calendar','directory','close','day','mon','copy','viewdoc','dldoc','opener','logout']);
 const A = {
   home: () => { closeOv(); go(''); },
   tab: el => { closeOv(); go('stage-' + (+el.dataset.i + 1)); },
   donetab: () => { closeOv(); go('done'); },
+  insptab: () => { closeOv(); go('insp'); },
   open: el => go('p-' + el.dataset.id),
   openx: el => { closeOv(); go('p-' + el.dataset.id); },
   calendar: () => openOv('calendar'),
   directory: () => openOv('directory'),
   close: () => closeOv(),
-  new: () => formOv({title:'פרויקט חדש', body:pForm({}), ok:'צור פרויקט', onOk: fd => {
-      const id = Store.newId('projects');
-      Store.set('projects', id, {name:fd.name.trim(), clientName:fd.clientName.trim(), location:fd.location.trim(), stage:0, done:false, description:'', deadline:'',
-        contractAmount:null, paidAmount:null, contacts:{architect:{}, client:{name:fd.clientName.trim()}, contractor:{}}, subtasks:[], docs:[], folderPath:'', createdAt:Date.now(), updatedAt:Date.now()});
-      go('p-' + id); toast('הפרויקט נוצר'); }}),
+  new: el => formOv({title: el.dataset.type === 'inspection' ? 'בדיקה חדשה' : 'פרויקט חדש', body:pForm({}, el.dataset.type || 'workflow'), ok:'צור', onOk: fd => {
+      const id = Store.newId('projects'), insp = fd.type === 'inspection';
+      Store.set('projects', id, Object.assign({name:fd.name.trim(), clientName:fd.clientName.trim(), location:fd.location.trim(), type: insp ? 'inspection' : 'workflow', wf:WF, stage:0, done:false, description:'', deadline:'',
+        contractAmount:null, paidAmount:null, contacts:{client:{name:fd.clientName.trim()}}, subtasks:[], docs:[], reports:[], folderPath:'', createdAt:Date.now(), updatedAt:Date.now()},
+        insp ? {inspStatus:INSP_STATUS[0], inspDate:'', approvalDate:'', facility:''} : {}));
+      go('p-' + id); toast(insp ? 'הבדיקה נוצרה' : 'הפרויקט נוצר'); }}),
   edit: el => { const p = S.projects.find(x => x.id === el.dataset.id); if (!p) return;
       formOv({title:'עריכת פרטים', body:pForm(p), extra:`<button type="button" class="btn link" style="color:var(--red)" data-a="delp" data-id="${esc(p.id)}">מחק פרויקט</button>`,
         onOk: fd => upd(p, {name:fd.name.trim(), clientName:fd.clientName.trim(), location:fd.location.trim()})}); },
   delp: el => { const p = S.projects.find(x => x.id === el.dataset.id); if (!p) return; closeOv();
-      confirmOv(`למחוק את "${p.name}"? לא ניתן לבטל.`, () => { Store.remove('projects', p.id); go(''); toast('הפרויקט נמחק'); }); },
+      confirmOv(`למחוק את "${p.name}"? לא ניתן לבטל.`, () => { (p.docs||[]).forEach(d => d.fid && deleteFile(d.fid)); Store.remove('projects', p.id); go(''); toast('הפרויקט נמחק'); }); },
   move: (el, e) => { e.stopPropagation(); moveStage(el.dataset.id, +el.dataset.to); },
+  back: el => { const p = S.projects.find(x => x.id === el.dataset.id); if (p) backChooser(p); },
+  goto: el => { const p = S.projects.find(x => x.id === el.dataset.id); if (!p) return; const to = +el.dataset.to;
+      formOv({title: to < (p.stage||0) ? 'החזרה לשלב קודם' : 'העברה לשלב', ok:'העבר', body:`<p style="margin:0">להעביר את "${esc(p.name)}" לשלב ${to+1}: ${STAGES[to].tab}?</p>`, onOk: () => moveStage(p.id, to)}); },
+  editrep: el => { const p = curP(); const r = p && (p.reports||[]).find(x => x.id === el.dataset.rid); if (!r) return;
+      formOv({title:'עריכת דוח סטטוס', body:`<label class="f">תאריך</label><input class="in" type="date" name="date" value="${esc(r.date)}" required style="margin-bottom:10px"><label class="f">עדכון</label><textarea class="in" name="text" rows="6" required>${esc(r.text)}</textarea>`,
+        onOk: fd => { const q = curP(); if (q) upd(q, {reports:(q.reports||[]).map(x => x.id === r.id ? Object.assign({}, x, {date:fd.date, text:fd.text.trim()}) : x)}); }}); },
+  delrep: el => { const p = curP(); if (p) confirmOv('למחוק את דוח הסטטוס הזה?', () => { const q = curP(); if (q) upd(q, {reports:(q.reports||[]).filter(x => x.id !== el.dataset.rid)}); }); },
+  dldoc: el => { const p = curP(); const d = p && (p.docs||[]).find(x => x.id === el.dataset.did); if (d) viewDoc(d, true); },
   markdone: (el, e) => { e.stopPropagation(); setDone(el.dataset.id, true); },
   reopen: (el, e) => { e.stopPropagation(); setDone(el.dataset.id, false); },
   deltask: el => { const p = curP(); if (p) upd(p, {subtasks:(p.subtasks||[]).filter(t => t.id !== el.dataset.tid)}); },
@@ -680,7 +802,7 @@ const A = {
   viewdoc: el => { const p = curP(); const d = p && (p.docs||[]).find(x => x.id === el.dataset.did); if (d) viewDoc(d); },
   logout: async () => { if (fbAuth) await fbAuth.signOut(); location.reload(); },
   deldoc: el => { const p = curP(); const d = p && (p.docs||[]).find(x => x.id === el.dataset.did); if (!d) return;
-      confirmOv(`למחוק את "${d.name}"?`, async () => { await upd(p, {docs:(p.docs||[]).filter(x => x.id !== d.id)}); if (fst && d.path){ try { await fst.ref(d.path).delete(); } catch(e){} } }); },
+      confirmOv(`למחוק את "${d.name}"?`, async () => { const q = curP() || p; await upd(q, {docs:(q.docs||[]).filter(x => x.id !== d.id)}); if (d.fid) deleteFile(d.fid); }); },
   copy: el => copyText(el.dataset.t),
   opener: () => openerHelp(),
   day: el => { UI.cal.sel = el.dataset.d; const d = parseD(el.dataset.d); UI.cal.y = d.getFullYear(); UI.cal.m = d.getMonth(); renderOv(); },
@@ -713,6 +835,9 @@ document.addEventListener('submit', e => {
   if (f.dataset.f === 'task' && p){ const title = fd.title.trim(); if (!title) return;
     upd(p, {subtasks:(p.subtasks||[]).concat({id:rid(), title, deadline:fd.deadline||'', done:false})});
     setTimeout(() => { const i = document.querySelector('[data-f=task] [name=title]'); if (i) i.focus(); }, 30); }
+  if (f.dataset.f === 'report' && p){ const text = (fd.text||'').trim(); if (!text) return;
+    const by = fbAuth && fbAuth.currentUser && fbAuth.currentUser.email ? fbAuth.currentUser.email.split('@')[0] : '';
+    upd(p, {reports:(p.reports||[]).concat({id:rid(), date:fd.date || today(), text, by, at:Date.now()})}); toast('דוח הסטטוס נשמר'); }
   if (f.dataset.f === 'event'){ Store.set('events', Store.newId('events'), {title:fd.title.trim(), date:UI.cal.sel, time:fd.time||'', projectId:fd.projectId||'', createdAt:Date.now()}); toast('הפגישה נוספה ליומן'); }
   if (f.dataset.f === 'dir'){ Store.set('directory', Store.newId('directory'), {name:fd.name.trim(), role:fd.role.trim(), phone:fd.phone.trim(), email:fd.email.trim(), createdAt:Date.now()}); f.reset(); toast('איש הקשר נוסף'); }
 });
