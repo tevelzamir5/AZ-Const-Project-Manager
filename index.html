@@ -50,6 +50,15 @@ header{background:var(--black);color:#fff;border-bottom:3px solid var(--accent)}
 .urg{font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
 .urg.u0{background:#eef6f1;color:#3f6b51}.urg.u1{background:var(--amber-soft);color:var(--amber)}.urg.u2{background:#fde3df;color:#b4231a}.urg.u3{background:#b4231a;color:#fff}
 .urg.none{background:var(--soft);color:var(--muted);font-weight:600}
+.folders{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.folder{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-weight:700}
+.folder:hover{border-color:var(--accent)}
+.folder.on{background:var(--black);border-color:var(--black);color:#fff}
+.folder .c{font-size:12px;font-weight:600;background:var(--soft);color:var(--muted);border-radius:20px;padding:1px 8px}
+.folder.on .c{background:#2b322e;color:#cfe9da}
+.dirsearch{position:relative;margin-bottom:12px}
+.dirsearch .in{padding:12px 40px 12px 14px;font-size:16px;border-radius:10px}
+.dirsearch svg{position:absolute;right:12px;top:13px;width:20px;height:20px;color:var(--muted)}
 .synced{font-size:11.5px;color:var(--accent-dark);background:var(--accent-soft);border-radius:20px;padding:2px 8px;font-weight:600}
 .tab{border:0;background:none;padding:14px 8px 12px;font-size:14px;font-weight:600;color:var(--ink2);border-bottom:3px solid transparent;white-space:nowrap;display:flex;gap:7px;align-items:center}
 .tab:hover{color:var(--ink)}
@@ -118,12 +127,17 @@ table.qpay{width:100%;border-collapse:collapse}
 .pctin{display:flex;align-items:center;gap:4px}.pctin .in{text-align:center}
 .qfixed{background:#faf9f6}.qfixed ul,.qfixed ol{margin:6px 0 0;padding-right:20px;line-height:1.8;color:var(--ink2)}
 .dfoot{position:sticky;bottom:0;background:var(--bg);padding:12px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line)}
-.xc{display:grid;grid-template-columns:110px 1fr 1fr 32px;gap:8px;align-items:center}
+.xc{display:grid;grid-template-columns:110px 1fr 1fr 32px;gap:6px 8px;align-items:center;padding:6px 0;border-top:1px solid var(--soft)}
+.xc .em{grid-column:2/4}
+.g3{display:grid;grid-template-columns:110px 1fr 1fr;gap:6px 8px;align-items:center;padding:6px 0;border-top:1px solid var(--soft)}
+.g3:first-child{border-top:0}
+.g3 .em{grid-column:2/4}
+.em{direction:ltr;text-align:right}
 .xc .in{padding:7px 9px}
 .xcadd{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
 .sitegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .panel.mid{width:min(680px,100%);background:#fff}
-.xcrow{display:grid;grid-template-columns:1fr 1fr 1fr 32px;gap:6px;margin-bottom:6px}
+.xcrow{display:grid;grid-template-columns:1fr 1fr 1fr 1.2fr 32px;gap:6px;margin-bottom:6px}
 button.step{font:inherit;text-align:right;cursor:pointer}
 button.step:hover{border-color:var(--accent)}
 button.step:disabled{cursor:default}
@@ -173,7 +187,6 @@ textarea.in{resize:vertical;line-height:1.5}
 input[type=date].in,input[type=time].in,input[type=tel].in,input[type=number].in{direction:rtl;text-align:right}
 label.f{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:5px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.g3{display:grid;grid-template-columns:110px 1fr 1fr;gap:8px;align-items:center}
 
 .ptop{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}
 .ptop h1{font-size:26px;font-weight:800}
@@ -265,12 +278,14 @@ ol.steps-ol{margin:0;padding-right:20px;line-height:1.8}
   .hbtn{padding:8px 9px}
   .hlogo{height:36px;padding:2px 5px}
   .g2{grid-template-columns:1fr}
-  .g3{grid-template-columns:1fr 1fr}.g3 b{grid-column:1/-1}
+  .g3{grid-template-columns:1fr 1fr}.g3 b{grid-column:1/-1}.g3 .em,.xc .em{grid-column:1/-1}
   .task{flex-wrap:wrap}.task .t{flex:1 1 calc(100% - 40px)}.task .date{flex:1 1 0;min-width:0;margin-right:29px}
   .day{min-height:54px}.ev{font-size:0;height:5px;padding:0}
   .stats{grid-template-columns:1fr 1fr}.pipe{grid-template-columns:repeat(2,1fr)}.inspbox{grid-template-columns:1fr}.sitegrid{grid-template-columns:1fr}.xc,.xcadd,.xcrow{grid-template-columns:1fr 1fr}.xc .icon{justify-self:end}
   .tbl .hide-m{display:none}
   .tbl td,.tbl th{padding:10px 8px}
+  .tbl .chip,.tbl .urg{white-space:normal;display:inline-block}
+  .folder{padding:7px 10px;font-size:14px}
   .segs i{width:14px}
   .psearch{flex:0 0 130px}.pqres{width:280px}
 }
@@ -342,11 +357,13 @@ const KINDS = ['וילה','בית פרטי','תוספת בנייה','מבנה ת
 const URG = ['נמוכה','בינונית','גבוהה','דחופה'];
 const VILLA_MONTHS = 3;
 const isVilla = p => p.kind === 'וילה';
+const kindLabel = p => p.kind === 'אחר' ? ((p.kindOther||'').trim() || 'אחר') : (p.kind || '');
+const isNinja = p => p.folder ? p.folder === 'ninja' : /נינג|ninja/i.test((p.facility||'') + ' ' + (p.name||''));
 const addMonths = (d, m) => { const x = new Date(d); x.setMonth(x.getMonth() + m); return ymd(x); };
 const projStart = p => p.startDate || ymd(new Date(p.createdAt || Date.now()));
 // דחיפות: בווילות מחושבת אוטומטית לפי הזמן שנותר עד היעד; בשאר הפרויקטים נבחרת ידנית
 function urgencyOf(p){
-  if (isVilla(p) && p.deadline){
+  if (isVilla(p) && p.deadline && !URG.includes(p.urgency)){
     const d = daysTo(p.deadline);
     const lvl = d <= 14 ? 3 : d <= 30 ? 2 : d <= 60 ? 1 : 0;
     return {lvl, auto:true};
@@ -357,20 +374,22 @@ function urgencyOf(p){
 function urgChip(p){
   const u = urgencyOf(p);
   if (u.lvl < 0) return '<span class="urg none">דחיפות: לא נקבעה</span>';
-  return `<span class="urg u${u.lvl}" title="${u.auto ? 'מחושב אוטומטית לפי הזמן שנותר עד היעד (וילה)' : 'נקבע ידנית'}">${u.auto ? '⏱ ' : ''}דחיפות ${URG[u.lvl]}</span>`;
+  return `<span class="urg u${u.lvl}" title="${u.auto ? 'מחושב אוטומטית לפי הזמן שנותר עד היעד (וילה)' : isVilla(p) ? 'נקבע ידנית (במקום החישוב האוטומטי)' : 'נקבע ידנית'}">${u.auto ? '⏱ ' : isVilla(p) ? '✋ ' : ''}דחיפות ${URG[u.lvl]}</span>`;
 }
 function sortProjects(arr){
   const by = UI.sort || 'urgency';
   const nm = (a,b) => String(a.name||'').localeCompare(String(b.name||''), 'he');
   const dl = (a,b) => String(a.deadline||'9999').localeCompare(String(b.deadline||'9999'));
+  const kr = p => { const i = KINDS.indexOf(p.kind); return i < 0 ? 99 : i; };
   return arr.slice().sort(by === 'name' ? nm
+    : by === 'type' ? (a,b) => (kr(a) - kr(b)) || kindLabel(a).localeCompare(kindLabel(b), 'he') || nm(a,b)
     : by === 'status' ? (a,b) => ((a.stage||0) - (b.stage||0)) || nm(a,b)
     : (a,b) => (urgencyOf(b).lvl - urgencyOf(a).lvl) || dl(a,b) || nm(a,b));
 }
 function sortBar(){
   const by = UI.sort || 'urgency';
   const b = (k, l) => `<button type="button" class="${by===k?'on':''}" data-a="sortby" data-v="${k}">${l}</button>`;
-  return `<div class="sortbar"><span class="muted sm">מיון לפי:</span><div class="seg">${b('urgency','דחיפות')}${b('name','שם')}${b('status','סטטוס')}</div></div>`;
+  return `<div class="sortbar"><span class="muted sm">מיון לפי:</span><div class="seg">${b('urgency','דחיפות')}${b('name','שם')}${b('status','סטטוס')}${b('type','סוג פרויקט')}</div></div>`;
 }
 const normName = s => String(s||'').trim().replace(/\s+/g, ' ').toLowerCase();
 const nameTaken = (name, exceptId) => S.projects.find(p => p.id !== exceptId && normName(p.name) === normName(name));
@@ -550,7 +569,7 @@ function homeView(){
   <div class="pipe">${STAGES.map((s,i) => `<button data-a="tab" data-i="${i}"><span class="pn">${W.filter(p => (p.stage||0) === i).length}</span><span class="pl">${i+1}. ${s.tab}</span></button>`).join('')}</div>
   ${rows.length ? `${sortBar()}<table class="tbl"><thead><tr><th>פרויקט</th><th>שלב נוכחי</th><th>דחיפות</th><th class="hide-m">תאריך יעד</th><th class="hide-m">משימות פתוחות</th><th class="hide-m">עדכון אחרון</th></tr></thead><tbody>
     ${rows.map(p => { const lt = lateTasks(p).length, lr = lastReport(p); return `<tr data-a="open" data-id="${esc(p.id)}">
-      <td><b>${esc(p.name||'ללא שם')}</b><div class="muted sm">${esc([p.clientName, p.location].filter(Boolean).join(' · '))}</div></td>
+      <td><b>${esc(p.name||'ללא שם')}</b><div class="muted sm">${esc([kindLabel(p), p.clientName, p.location].filter(Boolean).join(' · '))}</div></td>
       <td>${stageCell(p)}</td>
       <td>${urgChip(p).replace('דחיפות ', '')}</td>
       <td class="hide-m">${p.deadline ? dueChip(p.deadline) : '<span class="muted">—</span>'}</td>
@@ -573,7 +592,7 @@ function card(p){
   return `<div class="pcard" data-a="open" data-id="${esc(p.id)}">
     <h3>${esc(p.name || 'ללא שם')}</h3>
     ${p.clientName || p.location ? `<div class="muted sm">${esc([p.clientName, p.location].filter(Boolean).join(' · '))}</div>` : ''}
-    <div class="row">${insp ? inspChip(p.inspStatus) + (p.inspDate ? `<span class="chip">בדיקה: ${fmtD(p.inspDate)}</span>` : '') : urgChip(p) + (p.kind ? `<span class="chip">${esc(p.kind)}</span>` : '')}${dueChip(p.deadline)}${open ? `<span class="chip">${open} משימות פתוחות</span>` : ''}${late ? `<span class="chip red">${late} באיחור</span>` : ''}</div>
+    <div class="row">${insp ? inspChip(p.inspStatus) + (p.inspDate ? `<span class="chip">בדיקה: ${fmtD(p.inspDate)}</span>` : '') : urgChip(p) + (p.kind ? `<span class="chip">${esc(kindLabel(p))}</span>` : '')}${dueChip(p.deadline)}${open ? `<span class="chip">${open} משימות פתוחות</span>` : ''}${late ? `<span class="chip red">${late} באיחור</span>` : ''}</div>
     ${lr ? `<div class="lastrep">📝 ${fmtD(lr.date)} — ${esc(lr.text)}</div>` : ''}
     ${p.contractAmount ? `<div class="bar"><i style="width:${Math.min(100,pct(p))}%"></i></div><div class="muted sm">שולם ${pct(p)}% מתוך ${money(p.contractAmount)}</div>` : ''}
     <div class="foot"><span></span>
@@ -581,7 +600,9 @@ function card(p){
   </div>`;
 }
 function inspView(){
-  let ps = activeInsp().slice().sort((a,b) => String(a.approvalExpiry||'9999').localeCompare(String(b.approvalExpiry||'9999')));
+  const fo = UI.siteFolder || 'all', allSites = activeInsp();
+  const nNinja = allSites.filter(isNinja).length;
+  let ps = allSites.filter(p => fo === 'all' || (fo === 'ninja' ? isNinja(p) : !isNinja(p))).sort((a,b) => String(a.approvalExpiry||'9999').localeCompare(String(b.approvalExpiry||'9999')));
   const expired = ps.filter(p => p.approvalExpiry && daysTo(p.approvalExpiry) < 0).length;
   const soon = ps.filter(p => p.approvalExpiry && daysTo(p.approvalExpiry) >= 0 && daysTo(p.approvalExpiry) <= 30).length;
   const f = UI.siteFilter || 'all';
@@ -590,8 +611,11 @@ function inspView(){
   const all = ps;
   ps = f === 'expired' ? all.filter(isExp) : f === 'valid' ? all.filter(isValid) : all;
   const fb = (k, label, n) => `<button type="button" class="${f===k?'on':''}" data-a="sitefilter" data-v="${k}">${label} (${n})</button>`;
-  return `<div class="ptop" style="align-items:flex-end"><div class="stage-h" style="flex:1;margin:0"><h1>אישורים ובדיקות</h1></div>
+  const fbtn = (k, label, n) => `<button type="button" class="folder ${fo===k?'on':''}" data-a="sitefolder" data-v="${k}">${label}<span class="c">${n}</span></button>`;
+  return `<div class="ptop" style="align-items:flex-end"><div class="stage-h" style="flex:1;margin:0"><h1>אישורים ובדיקות${fo==='ninja' ? ' · 🥷 מתקני נינג׳ה' : ''}</h1></div>
+    ${fo === 'ninja' ? `<button class="btn" data-a="ninjaxls" ${nNinja ? '' : 'disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="#1d6f42" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 12l5 6M14 12l-5 6"/></svg> ייצוא לאקסל</button>` : ''}
     <button class="btn primary edit-only" data-a="addsite">+ הוספת אתר</button></div>
+  <div class="folders">${fbtn('all', '📁 כל האתרים', allSites.length)}${fbtn('ninja', '🥷 מתקני נינג׳ה', nNinja)}${fbtn('other', '📁 אתרים אחרים', allSites.length - nNinja)}</div>
   ${all.length ? `<div class="row" style="margin-bottom:12px;justify-content:space-between">
     <div class="seg">${fb('all','הכל',all.length)}${fb('valid','בתוקף',all.filter(isValid).length)}${fb('expired','פג תוקף',all.filter(isExp).length)}</div>
     ${soon ? `<span class="chip amber">${soon} פג תוקף ב-30 הימים הקרובים</span>` : ''}</div>` : ''}
@@ -605,6 +629,7 @@ function inspView(){
       <td>${nextChip(nextInsp(p))}</td>
       <td class="hide-m">${(p.docs||[]).length ? `📄 ${(p.docs||[]).length}` : '<span class="muted">—</span>'}</td></tr>`).join('')}
   </tbody></table>` : all.length ? `<div class="empty"><b>אין אתרים ${f==='expired'?'שפג תוקפם':'בתוקף'}</b>${f==='valid'?'אתרים בלי תאריך תוקף לא מופיעים כאן.':''}</div>`
+    : fo === 'ninja' ? `<div class="empty"><b>אין עדיין מתקני נינג׳ה</b>הוסף אתר ובחר בתיקייה "מתקני נינג׳ה".</div>`
     : `<div class="empty"><b>עדיין אין אתרים</b>לחץ על "+ הוספת אתר" כדי להוסיף את האתר הראשון.</div>`}`;
 }
 function doneView(){
@@ -638,12 +663,14 @@ function xcBox(p){
       <input class="in" data-xc="${esc(c.id)}" data-xf="role" value="${esc(c.role||'')}" placeholder="תפקיד" style="font-weight:600">
       <input class="in" data-xc="${esc(c.id)}" data-xf="name" value="${esc(c.name||'')}" placeholder="שם">
       <input class="in" type="tel" data-xc="${esc(c.id)}" data-xf="phone" value="${esc(c.phone||'')}" placeholder="טלפון">
-      <button class="icon edit-only" data-a="delxc" data-xcid="${esc(c.id)}" title="הסר איש קשר">${TRASH}</button></div>`).join('')}
+      <button class="icon edit-only" data-a="delxc" data-xcid="${esc(c.id)}" title="הסר איש קשר">${TRASH}</button>
+      <span></span><input class="in em" type="email" data-xc="${esc(c.id)}" data-xf="email" value="${esc(c.email||'')}" placeholder="אימייל"></div>`).join('')}
     <form class="xcadd edit-only" data-f="xc">
       <input class="in" name="role" placeholder="תפקיד (חשמלאי, מודד…)" required>
       <input class="in" name="name" placeholder="שם">
       <input class="in" type="tel" name="phone" placeholder="טלפון">
-      <button class="btn sm">+ הוסף איש קשר</button></form>`;
+      <input class="in em" type="email" name="email" placeholder="אימייל">
+      <button class="btn sm" style="grid-column:1/-1;justify-self:start">+ הוסף איש קשר</button></form>`;
 }
 function docsBox(p, title){
   const docs = p.docs || [];
@@ -663,6 +690,7 @@ function siteView(p){
       <div><label class="f">שם האתר</label>${inp('name', p.name)}</div>
       <div><label class="f">כתובת</label>${inp('location', p.location)}</div>
       <div><label class="f">סוג מתקן / ציוד</label>${inp('facility', p.facility, {ph:'לדוגמה: קיר טיפוס, פארק נינג׳ה'})}</div>
+      <div><label class="f">תיקייה</label><select class="in" data-pf="folder"><option value="ninja" ${isNinja(p)?'selected':''}>🥷 מתקני נינג׳ה</option><option value="other" ${!isNinja(p)?'selected':''}>📁 אתרים אחרים</option></select></div>
       <div><label class="f">תאריך הבדיקה האחרונה</label>${inp('lastInspection', p.lastInspection, {type:'date'})}</div>
       <div><label class="f">תוקף האישור הנוכחי</label>${inp('approvalExpiry', p.approvalExpiry, {type:'date'})}</div>
       <div><label class="f">הבדיקה הבאה מתוכננת ל-</label>${inp('nextInspection', nextInsp(p), {type:'date'})}</div>
@@ -731,12 +759,15 @@ function projectView(id){
       ${(() => { const u = urgencyOf(p), villa = isVilla(p), lim = addMonths(projStart(p), VILLA_MONTHS), over = villa && p.deadline && p.deadline > lim;
         return `<div class="box"><h2>סיווג ודחיפות ${p.done ? '' : urgChip(p)}</h2>
         <div class="g2">
-          <div><label class="f">סוג הפרויקט</label><select class="in" data-pf="kind"><option value="">— בחר —</option>${KINDS.map(k => `<option ${p.kind===k?'selected':''}>${k}</option>`).join('')}</select></div>
-          <div><label class="f">רמת דחיפות</label>${villa && p.deadline ? `<div class="hint" style="margin:0;padding:8px 10px">נקבעת אוטומטית לפי הזמן שנותר עד היעד</div>`
+          <div><label class="f">סוג הפרויקט</label><select class="in" data-pf="kind"><option value="">— בחר —</option>${KINDS.map(k => `<option ${p.kind===k?'selected':''}>${k}</option>`).join('')}</select>
+            ${p.kind === 'אחר' ? `<div style="margin-top:6px">${inp('kindOther', p.kindOther, {ph:'כתוב את סוג הפרויקט…'})}</div>` : ''}</div>
+          <div><label class="f">רמת דחיפות</label>${villa && p.deadline
+            ? `<select class="in" data-pf="urgency"><option value="">⏱ אוטומטי לפי היעד${u.auto ? ' (' + URG[u.lvl] + ')' : ''}</option>${URG.map(x => `<option ${p.urgency===x?'selected':''} value="${x}">✋ ידני: ${x}</option>`).join('')}</select>`
             : `<select class="in" data-pf="urgency"><option value="">— בחר —</option>${URG.map(x => `<option ${p.urgency===x?'selected':''}>${x}</option>`).join('')}</select>`}</div>
+          <div><label class="f">תאריך פתיחה</label>${inp('startDate', projStart(p), {type:'date'})}</div>
+          <div><label class="f">תאריך יעד ${p.done ? '' : dueChip(p.deadline)}</label>${inp('deadline', p.deadline, {type:'date'})}</div>
         </div>
-        <div style="margin-top:12px"><label class="f">תאריך יעד ${p.done ? '' : dueChip(p.deadline)}</label>${inp('deadline', p.deadline, {type:'date'})}</div>
-        ${villa ? `<div class="hint">וילה: יעד סטנדרטי של עד ${VILLA_MONTHS} חודשים מתחילת הפרויקט (${fmtD(projStart(p))} ← ${fmtD(lim)}). הדחיפות: נמוכה מעל 60 יום, בינונית עד 60, גבוהה עד 30, דחופה עד 14 יום או באיחור.</div>` : ''}
+        ${villa ? `<div class="hint">וילה: יעד סטנדרטי של עד ${VILLA_MONTHS} חודשים מתחילת הפרויקט (${fmtD(projStart(p))} ← ${fmtD(lim)}). הדחיפות האוטומטית: נמוכה מעל 60 יום, בינונית עד 60, גבוהה עד 30, דחופה עד 14 יום או באיחור${URG.includes(p.urgency) ? '. <b>כרגע נקבעה ידנית</b> — בחר "אוטומטי" כדי לחזור לחישוב.' : '. אפשר לקבוע ידנית ברשימה.'}</div>` : ''}
         ${over ? `<div class="chip red" style="margin-top:8px">היעד חורג מ-${VILLA_MONTHS} החודשים הסטנדרטיים לווילה</div>` : ''}
         </div>`; })()}
       <div class="box"><h2>כספים</h2>
@@ -746,7 +777,7 @@ function projectView(id){
         <div class="sum"><span class="muted">שולם ${pct(p)}%</span><span>יתרה לתשלום: <b style="color:${c-paid>0?'var(--ink)':'var(--green)'}">${money(c-paid)}</b></span></div>` : ''}
       </div>
       <div class="box"><h2>אנשי קשר בפרויקט</h2>
-        <div style="display:grid;gap:8px">${ROLES.map(([k,l]) => `<div class="g3"><b>${l}</b>${inp(`contacts.${k}.name`, getPath(p,`contacts.${k}.name`), {ph:'שם'})}${inp(`contacts.${k}.phone`, getPath(p,`contacts.${k}.phone`), {type:'tel', ph:'טלפון'})}</div>`).join('')}</div>
+        <div>${ROLES.map(([k,l]) => `<div class="g3"><b>${l}</b>${inp(`contacts.${k}.name`, getPath(p,`contacts.${k}.name`), {ph:'שם'})}${inp(`contacts.${k}.phone`, getPath(p,`contacts.${k}.phone`), {type:'tel', ph:'טלפון'})}<span></span><span class="em">${inp(`contacts.${k}.email`, getPath(p,`contacts.${k}.email`), {type:'email', ph:'אימייל'})}</span></div>`).join('')}</div>
         ${xcBox(p)}
       </div>
     </div>
@@ -772,7 +803,7 @@ function formOv({title, body, ok='שמירה', danger=false, onOk, extra='', siz
   o.innerHTML = `<form class="panel ${size}" id="fm"><div class="panel-h"><h2>${esc(title)}</h2></div><div class="panel-b">${body}</div>
     <div class="panel-f">${ok ? `<button class="btn ${danger?'danger':'primary'}">${esc(ok)}</button>` : ''}<button type="button" class="btn" data-a="close">${ok ? 'ביטול' : 'סגור'}</button><span style="flex:1"></span>${extra}</div></form>`;
   const f = $('#fm');
-  f.onsubmit = e => { e.preventDefault(); const fd = Object.fromEntries(new FormData(f)); const rows = [...f.querySelectorAll('.xcrow')].map(r => ({role:r.querySelector('[name=xrole]').value.trim(), name:r.querySelector('[name=xname]').value.trim(), phone:r.querySelector('[name=xphone]').value.trim()})); const fi = f.querySelector('input[type=file]'); const files = fi ? [...fi.files] : []; closeOv(); onOk && onOk(fd, rows, files); };
+  f.onsubmit = e => { e.preventDefault(); const fd = Object.fromEntries(new FormData(f)); const rows = [...f.querySelectorAll('.xcrow')].map(r => ({role:r.querySelector('[name=xrole]').value.trim(), name:r.querySelector('[name=xname]').value.trim(), phone:r.querySelector('[name=xphone]').value.trim(), email:(r.querySelector('[name=xemail]')||{value:''}).value.trim()})); const fi = f.querySelector('input[type=file]'); const files = fi ? [...fi.files] : []; closeOv(); onOk && onOk(fd, rows, files); };
   const i = f.querySelector('input:not([readonly]),textarea'); if (i) i.focus();
 }
 const confirmOv = (msg, fn) => formOv({title:'בטוח?', body:`<p style="margin:0">${esc(msg)}</p>`, ok:'מחק', danger:true, onOk:fn});
@@ -835,29 +866,33 @@ const phoneKey = ph => String(ph||'').replace(/\D/g, '').replace(/^972/, '0');
 function proContacts(){
   const out = [];
   S.projects.forEach(p => {
-    ROLES.forEach(([k, label]) => { if (k === 'client') return; const c = getPath(p, 'contacts.' + k) || {}; if ((c.name||'').trim() || (c.phone||'').trim()) out.push({name:(c.name||'').trim(), phone:(c.phone||'').trim(), role:label, p}); });
-    (p.extraContacts||[]).forEach(c => { if (isClientRole(c.role)) return; if ((c.name||'').trim() || (c.phone||'').trim()) out.push({name:(c.name||'').trim(), phone:(c.phone||'').trim(), role:(c.role||'').trim(), p}); });
+    const add = (c, role) => { const name = (c.name||'').trim(), phone = (c.phone||'').trim(), email = (c.email||'').trim(); if (name || phone || email) out.push({name, phone, email, role, p}); };
+    ROLES.forEach(([k, label]) => { if (k !== 'client') add(getPath(p, 'contacts.' + k) || {}, label); });
+    (p.extraContacts||[]).forEach(c => { if (!isClientRole(c.role)) add(c, (c.role||'').trim()); });
   });
   return out;
 }
 function dirEntries(){
-  const map = new Map(), keyOf = c => phoneKey(c.phone) || 'n:' + normName(c.name);
+  const map = new Map(), keyOf = c => phoneKey(c.phone) || (c.name ? 'n:' + normName(c.name) : 'e:' + String(c.email||'').toLowerCase());
   S.directory.forEach(c => map.set(keyOf(c), Object.assign({projects:[], roles:new Set(c.role ? [c.role] : []), manual:true}, c)));
   proContacts().forEach(c => {
     const k = keyOf(c);
     let e = map.get(k);
     if (!e && c.name){ for (const x of map.values()) if (!phoneKey(x.phone) && normName(x.name) === normName(c.name)){ e = x; break; } }
-    if (!e){ e = {name:c.name, phone:c.phone, projects:[], roles:new Set(), manual:false}; map.set(k, e); }
-    if (!e.name && c.name) e.name = c.name; if (!e.phone && c.phone) e.phone = c.phone;
+    if (!e && c.email){ for (const x of map.values()) if (x.email && x.email.toLowerCase() === c.email.toLowerCase()){ e = x; break; } }
+    if (!e){ e = {name:c.name, phone:c.phone, email:c.email, projects:[], roles:new Set(), manual:false}; map.set(k, e); }
+    if (!e.name && c.name) e.name = c.name; if (!e.phone && c.phone) e.phone = c.phone; if (!e.email && c.email) e.email = c.email;
     if (c.role) e.roles.add(c.role);
     if (!e.projects.some(x => x.id === c.p.id)) e.projects.push(c.p);
   });
   return [...map.values()].sort((a,b) => String(a.name||'').localeCompare(String(b.name||''), 'he'));
 }
 function dirList(){
-  const q = UI.dirQ.trim().toLowerCase(), f = UI.dirF || 'all';
+  const q = normName(UI.dirQ), f = UI.dirF || 'all';
+  const rank = c => { const n = normName(c.name); return !q ? 0 : n.startsWith(q) || n.split(' ').some(w => w.startsWith(q)) ? 0 : n.includes(q) ? 1 : 2; };
   const list = dirEntries().filter(c => (f === 'all' || (f === 'pro' ? c.projects.length : c.manual))
-    && (!q || [c.name, c.phone, c.email, [...c.roles].join(' '), c.projects.map(p => p.name).join(' ')].some(v => String(v||'').toLowerCase().includes(q))));
+    && (!q || [c.name, c.phone, c.email, [...c.roles].join(' '), c.projects.map(p => p.name).join(' ')].some(v => normName(v).includes(q))))
+    .sort((a,b) => rank(a) - rank(b));
   return list.map(c => `<div class="person"><span class="av">${esc(String(c.name||'?').trim()[0]||'?')}</span>
     <div class="info"><b>${esc(c.name || '—')}</b> ${[...c.roles].map(r => `<span class="chip">${esc(r)}</span>`).join(' ')}
       ${c.projects.length ? `<div class="row" style="margin-top:4px;gap:4px"><span class="synced">🔗 מסונכרן מפרויקטים</span>${c.projects.map(p => `<button class="btn link sm" style="padding:0 4px" data-a="openx" data-id="${esc(p.id)}">${esc(p.name)}</button>`).join('')}</div>` : ''}
@@ -867,11 +902,14 @@ function dirList(){
     || `<div class="muted" style="padding:16px 0;text-align:center">${q ? 'לא נמצאו תוצאות.' : 'אין אנשי קשר עדיין.'}</div>`;
 }
 function dirView(){
-  return `<form class="box edit-only" data-f="dir" style="margin-bottom:12px"><h2>הוספת איש קשר</h2>
+  return `<div class="dirsearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="in" id="dirQ" placeholder="חיפוש איש קשר לפי שם…" value="${esc(UI.dirQ)}" autocomplete="off"></div>
+    <details class="box edit-only" style="margin-bottom:12px" ${UI.dirAddOpen?'open':''} id="dirAdd"><summary style="cursor:pointer;font-weight:700">+ הוספת איש קשר</summary>
+    <form data-f="dir" style="margin-top:12px">
       <div class="g2"><input class="in" name="name" placeholder="שם מלא" required><input class="in" name="role" placeholder="תפקיד (מהנדס, ספק, עירייה…)">
       <input class="in" type="tel" name="phone" placeholder="טלפון"><input class="in" type="email" name="email" placeholder="אימייל (לא חובה)" style="direction:ltr;text-align:right"></div>
-      <button class="btn primary" style="margin-top:10px">הוסף</button></form>
-    <div class="box" style="margin:0"><div class="row" style="margin-bottom:8px;gap:8px"><input class="in" id="dirQ" placeholder="חיפוש לפי שם, תפקיד, טלפון או פרויקט…" value="${esc(UI.dirQ)}" style="flex:1;min-width:200px">
+      <button class="btn primary" style="margin-top:10px">הוסף</button></form></details>
+    <div class="box" style="margin:0"><div class="row" style="margin-bottom:8px;gap:8px">
       <div class="seg">${[['all','הכל'],['pro','אנשי מקצוע מפרויקטים'],['manual','נוספו ידנית']].map(([k,l]) => `<button type="button" class="${(UI.dirF||'all')===k?'on':''}" data-a="dirf" data-v="${k}">${l}</button>`).join('')}</div></div>
       <div id="dirList">${dirList()}</div>
       <div class="muted sm" style="margin-top:10px">אנשי מקצוע שמוזנים בפרויקטים (אדריכל, קבלן, מפקח, יועצים ואנשי קשר נוספים) מופיעים כאן אוטומטית. לקוחות לא נכנסים לרשימה. עריכה — בדף הפרויקט.</div></div>`;
@@ -1377,6 +1415,32 @@ async function submitQuote(){
   if (btn){ btn.disabled = false; btn.textContent = '⬇ הפק PDF'; }
 }
 
+/* ===== ייצוא מתקני נינג'ה לאקסל ===== */
+const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+async function exportNinjaXlsx(){
+  const sites = activeInsp().filter(isNinja).sort((a,b) => String(a.approvalExpiry||'9999').localeCompare(String(b.approvalExpiry||'9999')));
+  if (!sites.length){ toast('אין מתקני נינג׳ה לייצוא'); return; }
+  try {
+    if (!window.XLSX) await loadScript(XLSX_URL);
+    const D = s => s ? parseD(s) : '';
+    const apStatus = p => !p.approvalExpiry ? 'לא הוזן' : daysTo(p.approvalExpiry) < 0 ? 'פג תוקף' : daysTo(p.approvalExpiry) <= 30 ? 'בתוקף — פג בקרוב' : 'בתוקף';
+    const inStatus = p => { const d = nextInsp(p); return !d ? 'לא נקבעה' : daysTo(d) < 0 ? 'באיחור' : daysTo(d) <= 14 ? 'בשבועיים הקרובים' : 'מתוכננת'; };
+    const head = ['שם האתר','כתובת','סוג מתקן / ציוד','בדיקה אחרונה','תוקף האישור','סטטוס האישור','ימים עד פקיעת האישור','בדיקה הבאה','סטטוס הבדיקה','אנשי קשר','דוחות פיקוח','הערות'];
+    const rows = sites.map(p => [p.name||'', p.location||'', p.facility||'', D(p.lastInspection), D(p.approvalExpiry), apStatus(p),
+      p.approvalExpiry ? daysTo(p.approvalExpiry) : '', D(nextInsp(p)), inStatus(p),
+      (p.extraContacts||[]).map(c => [c.role, c.name, c.phone, c.email].filter(Boolean).join(' ')).join(' | '), (p.docs||[]).length, p.description||'']);
+    const ws = XLSX.utils.aoa_to_sheet([head].concat(rows), {cellDates:true, dateNF:'dd/mm/yyyy'});
+    ws['!cols'] = [26,24,22,13,13,17,12,13,17,44,10,30].map(w => ({wch:w}));
+    ws['!autofilter'] = {ref: XLSX.utils.encode_range({s:{r:0, c:0}, e:{r:rows.length, c:head.length - 1}})};
+    for (let r = 1; r <= rows.length; r++) [3,4,7].forEach(c => { const cell = ws[XLSX.utils.encode_cell({r, c})]; if (cell && cell.t === 'd') cell.z = 'dd/mm/yyyy'; });
+    const wb = XLSX.utils.book_new();
+    wb.Workbook = {Views:[{RTL:true}]};
+    XLSX.utils.book_append_sheet(wb, ws, 'מתקני נינג׳ה');
+    XLSX.writeFile(wb, `מתקני נינג'ה - אישורים ובדיקות - ${fmtD(today()).replace(/\./g, '-')}.xlsx`, {cellDates:true});
+    toast(`קובץ אקסל עם ${sites.length} מתקנים הורד`);
+  } catch(e){ console.error(e); toast('הייצוא לאקסל נכשל — בדוק את החיבור לאינטרנט ונסה שוב.'); }
+}
+
 /* ===== actions ===== */
 const curP = () => { const r = route(); return r.id ? S.projects.find(p => p.id === r.id) : null; };
 const upd = (p, patch) => Store.update('projects', p.id, Object.assign(patch, {updatedAt:Date.now()}));
@@ -1386,12 +1450,13 @@ function toast(m, act){
   const box = $('#toasts'); box.appendChild(t); while (box.children.length > 2) box.firstChild.remove();
   setTimeout(() => t.remove(), act ? 6000 : 3000);
 }
-const xcRowHtml = () => `<div class="xcrow"><input class="in" name="xrole" placeholder="תפקיד"><input class="in" name="xname" placeholder="שם"><input class="in" type="tel" name="xphone" placeholder="טלפון"><button type="button" class="icon" data-a="delxcrow" title="הסר">${TRASH}</button></div>`;
+const xcRowHtml = () => `<div class="xcrow"><input class="in" name="xrole" placeholder="תפקיד"><input class="in" name="xname" placeholder="שם"><input class="in" type="tel" name="xphone" placeholder="טלפון"><input class="in em" type="email" name="xemail" placeholder="אימייל"><button type="button" class="icon" data-a="delxcrow" title="הסר">${TRASH}</button></div>`;
 function siteForm(){
   return `<div style="display:grid;gap:12px">
     <div class="g2"><div><label class="f">שם האתר</label><input class="in" name="name" required placeholder="לדוגמה: פארק נינג׳ה — קניון הנגב"></div>
       <div><label class="f">כתובת</label><input class="in" name="location"></div></div>
-    <div><label class="f">סוג מתקן / ציוד</label><input class="in" name="facility" placeholder="לדוגמה: קיר טיפוס, מסלול נינג׳ה, מתקני חבלים"></div>
+    <div class="g2"><div><label class="f">סוג מתקן / ציוד</label><input class="in" name="facility" placeholder="לדוגמה: קיר טיפוס, מסלול נינג׳ה, מתקני חבלים"></div>
+      <div><label class="f">תיקייה</label><select class="in" name="folder"><option value="ninja" ${UI.siteFolder==='ninja'?'selected':''}>🥷 מתקני נינג׳ה</option><option value="other" ${UI.siteFolder!=='ninja'?'selected':''}>📁 אתרים אחרים</option></select></div></div>
     <div class="g2"><div><label class="f">תאריך הבדיקה האחרונה</label><input class="in" type="date" name="lastInspection"></div>
       <div><label class="f">תוקף האישור הנוכחי</label><input class="in" type="date" name="approvalExpiry"></div></div>
     <div class="g2"><div><label class="f">הבדיקה הבאה מתוכננת ל-</label><input class="in" type="date" name="nextInspection"></div><div></div></div>
@@ -1410,6 +1475,7 @@ function pForm(p, type){
     <div class="g2"><div><label class="f">לקוח</label><input class="in" name="clientName" value="${esc(p.clientName||'')}"></div>
     <div><label class="f">כתובת</label><input class="in" name="location" value="${esc(p.location||'')}"></div></div>
     ${p.id ? '' : `<div class="g2"><div><label class="f">סוג הפרויקט</label><select class="in" name="kind" id="newKind"><option value="">— בחר —</option>${KINDS.map(k => `<option ${p.kind===k?'selected':''}>${k}</option>`).join('')}</select></div>
+      <div id="newKindOther" style="grid-column:1/-1;${p.kind==='אחר'?'':'display:none'}"><label class="f">סוג הפרויקט (טקסט חופשי)</label><input class="in" name="kindOther" value="${esc(p.kindOther||'')}" placeholder="לדוגמה: מבנה ציבור, גשר הולכי רגל…"></div>
       <div id="newUrgBox"><label class="f">רמת דחיפות</label><select class="in" name="urgency">${URG.map(x => `<option ${(p.urgency||'בינונית')===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
       <div id="villaNote" class="hint" style="margin:0;${p.kind==='וילה'?'':'display:none'}">וילה: יעד של ${VILLA_MONTHS} חודשים מהיום ייקבע אוטומטית (${fmtD(addMonths(today(), VILLA_MONTHS))}), והדחיפות תתעדכן לבד לפי הזמן שנותר.</div>`}
   </div>`;
@@ -1422,7 +1488,7 @@ function newProjectForm(vals){
   formOv({title:'פרויקט חדש', body:pForm(vals), ok:'צור פרויקט', onOk: fd => {
     const dup = nameTaken(fd.name); if (dup){ setTimeout(() => dupWarning(fd.name, dup, () => newProjectForm(fd)), 0); return; }
     const id = Store.newId('projects'), villa = fd.kind === 'וילה';
-    Store.set('projects', id, {name:fd.name.trim(), clientName:fd.clientName.trim(), location:fd.location.trim(), type:'workflow', kind:fd.kind||'', urgency: villa ? '' : (fd.urgency||''),
+    Store.set('projects', id, {name:fd.name.trim(), clientName:fd.clientName.trim(), location:fd.location.trim(), type:'workflow', kind:fd.kind||'', kindOther: fd.kind === 'אחר' ? (fd.kindOther||'').trim() : '', urgency: villa ? '' : (fd.urgency||''),
       wf:WF, stage:0, done:false, description:'', deadline: villa ? addMonths(today(), VILLA_MONTHS) : '', startDate:today(),
       contractAmount:null, paidAmount:null, contacts:{client:{name:fd.clientName.trim()}}, subtasks:[], docs:[], reports:[], createdAt:Date.now(), updatedAt:Date.now()});
     go('p-' + id); toast(villa ? `הפרויקט נוצר — יעד ל-${fmtD(addMonths(today(), VILLA_MONTHS))}` : 'הפרויקט נוצר'); }});
@@ -1468,7 +1534,7 @@ function setDone(id, done){
   toast(done ? `"${p.name}" סומן כהושלם` : `"${p.name}" חזר לפעילות`, {label:'בטל', fn:() => { const q = S.projects.find(x => x.id === id); if (q) upd(q, {done:!done, doneAt: !done ? Date.now() : null}); }});
 }
 
-const READONLY_OK = new Set(['dirf','sortby','dupopen','pqgo','qtype','qresume','qreset','qadd','qdel','qaddsec','qdelsec','docs','opentpl','sigclear','sitefilter','home','tab','donetab','insptab','addxcrow','delxcrow','open','openx','calendar','directory','close','day','mon','copy','viewdoc','dldoc','opener','logout']);
+const READONLY_OK = new Set(['sitefolder','ninjaxls','dirf','sortby','dupopen','pqgo','qtype','qresume','qreset','qadd','qdel','qaddsec','qdelsec','docs','opentpl','sigclear','sitefilter','home','tab','donetab','insptab','addxcrow','delxcrow','open','openx','calendar','directory','close','day','mon','copy','viewdoc','dldoc','opener','logout']);
 const A = {
   home: () => { closeOv(); go(''); },
   tab: el => { closeOv(); go('stage-' + (+el.dataset.i + 1)); },
@@ -1480,6 +1546,8 @@ const A = {
   directory: () => openOv('directory'),
   close: () => closeOv(),
   new: el => newProjectForm({}),
+  sitefolder: el => { UI.siteFolder = el.dataset.v; UI.siteFilter = 'all'; render(); },
+  ninjaxls: () => exportNinjaXlsx(),
   dirf: el => { UI.dirF = el.dataset.v; renderOv(); },
   sortby: el => { UI.sort = el.dataset.v; render(); },
   pqgo: el => { const i = $('#pq'); if (i){ i.value = ''; i.blur(); } $('#pqres').classList.add('hidden'); closeOv(); go('p-' + el.dataset.id); },
@@ -1494,8 +1562,8 @@ const A = {
   addsite: () => formOv({title:'הוספת אתר', size:'mid', ok:'שמור אתר', body:siteForm(), onOk: (fd, rows, files) => {
       const dup = nameTaken(fd.name); if (dup){ setTimeout(() => dupWarning(fd.name, dup, () => A.addsite()), 0); return; }
       const id = Store.newId('projects');
-      Store.set('projects', id, {type:'inspection', name:fd.name.trim(), location:fd.location.trim(), facility:fd.facility.trim(), lastInspection:fd.lastInspection||'', approvalExpiry:fd.approvalExpiry||'', nextInspection:fd.nextInspection||'',
-        extraContacts: rows.filter(r => r.role || r.name || r.phone).map(r => Object.assign({id:rid()}, r)), docs:[], description:'', done:false, wf:WF, createdAt:Date.now(), updatedAt:Date.now()});
+      Store.set('projects', id, {type:'inspection', folder: fd.folder || 'other', name:fd.name.trim(), location:fd.location.trim(), facility:fd.facility.trim(), lastInspection:fd.lastInspection||'', approvalExpiry:fd.approvalExpiry||'', nextInspection:fd.nextInspection||'',
+        extraContacts: rows.filter(r => r.role || r.name || r.phone || r.email).map(r => Object.assign({id:rid()}, r)), docs:[], description:'', done:false, wf:WF, createdAt:Date.now(), updatedAt:Date.now()});
       go('p-' + id); toast('האתר נוסף');
       if (files.length) setTimeout(() => upload(files, id), 300); }}),
   docs: () => { closeOv(); go('docs'); },
@@ -1542,14 +1610,17 @@ document.addEventListener('click', e => {
   if (S.ro && !READONLY_OK.has(el.dataset.a)) return;
   A[el.dataset.a] && A[el.dataset.a](el, e);
 });
+document.addEventListener('toggle', e => { if (e.target.id === 'dirAdd') UI.dirAddOpen = e.target.open; }, true);
 document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('arch')) UI.archOpen = e.target.open; }, true);
 document.addEventListener('change', e => {
   const el = e.target;
-  if (el.id === 'newKind'){ const v = el.value === 'וילה'; const n = $('#villaNote'), u = $('#newUrgBox'); if (n) n.style.display = v ? '' : 'none'; if (u) u.style.visibility = v ? 'hidden' : ''; return; }
+  if (el.id === 'newKind'){ const v = el.value === 'וילה'; const n = $('#villaNote'), u = $('#newUrgBox'), o = $('#newKindOther'); if (n) n.style.display = v ? '' : 'none'; if (u) u.style.visibility = v ? 'hidden' : ''; if (o){ o.style.display = el.value === 'אחר' ? '' : 'none'; if (el.value === 'אחר') o.querySelector('input').focus(); } return; }
   if (el.id === 'docProject'){ const p = S.projects.find(x => x.id === el.value); const t = tplById(el.form.dataset.t); if (p && t) t.sections.forEach(sec => sec.fields.forEach(f => { if (f.from && p[f.from]){ const i = el.form.querySelector(`[name="${f.k}"]`); if (i) i.value = p[f.from]; } })); return; }
   if (el.id === 'fileIn'){ const p = curP(); if (p) upload([...el.files], p.id); el.value = ''; return; }
   const p = curP(); if (!p) return;
   if (el.dataset.pf === 'name'){ const dup = nameTaken(el.value, p.id); if (dup){ render(); dupWarning(el.value, dup, () => {}); return; } }
+  if (el.dataset.pf === 'startDate' && el.value && isVilla(p) && p.deadline === addMonths(projStart(p), VILLA_MONTHS)){
+    upd(p, {startDate: el.value, deadline: addMonths(el.value, VILLA_MONTHS)}); toast(`תאריך הפתיחה עודכן — היעד הסטנדרטי עודכן ל-${fmtD(addMonths(el.value, VILLA_MONTHS))}`); return; }
   if (el.dataset.pf === 'kind' && el.value === 'וילה' && !p.deadline){ upd(p, {kind:'וילה', urgency:'', deadline: addMonths(projStart(p), VILLA_MONTHS)}); toast(`יעד סטנדרטי לווילה נקבע ל-${fmtD(addMonths(projStart(p), VILLA_MONTHS))}`); return; }
   if (el.dataset.pf){ let v = el.value.trim(); if (el.dataset.pf === 'name' && !v){ render(); return; } if (el.dataset.num) v = v === '' ? null : Math.max(0, Number(v)); if (getPath(p, el.dataset.pf) === v) return; upd(p, nest(el.dataset.pf.split('.'), v)); }
   if (el.dataset.tdone){
@@ -1568,13 +1639,13 @@ document.addEventListener('submit', e => {
   if (f.dataset.f === 'task' && p){ const title = fd.title.trim(); if (!title) return;
     upd(p, {subtasks:(p.subtasks||[]).concat({id:rid(), title, deadline:fd.deadline||'', done:false})});
     setTimeout(() => { const i = document.querySelector('[data-f=task] [name=title]'); if (i) i.focus(); }, 30); }
-  if (f.dataset.f === 'xc' && p){ const c = {id:rid(), role:fd.role.trim(), name:fd.name.trim(), phone:fd.phone.trim()}; if (!c.role) return;
+  if (f.dataset.f === 'xc' && p){ const c = {id:rid(), role:fd.role.trim(), name:fd.name.trim(), phone:fd.phone.trim(), email:(fd.email||'').trim()}; if (!c.role) return;
     upd(p, {extraContacts:(p.extraContacts||[]).concat(c)}); toast('איש הקשר נוסף'); }
   if (f.dataset.f === 'report' && p){ const text = (fd.text||'').trim(); if (!text) return;
     const by = fbAuth && fbAuth.currentUser && fbAuth.currentUser.email ? fbAuth.currentUser.email.split('@')[0] : '';
     upd(p, {reports:(p.reports||[]).concat({id:rid(), date:fd.date || today(), text, by, at:Date.now()})}); toast('דוח הסטטוס נשמר'); }
   if (f.dataset.f === 'event'){ Store.set('events', Store.newId('events'), {title:fd.title.trim(), date:UI.cal.sel, time:fd.time||'', projectId:fd.projectId||'', createdAt:Date.now()}); toast('הפגישה נוספה ליומן'); }
-  if (f.dataset.f === 'dir'){ Store.set('directory', Store.newId('directory'), {name:fd.name.trim(), role:fd.role.trim(), phone:fd.phone.trim(), email:fd.email.trim(), createdAt:Date.now()}); f.reset(); toast('איש הקשר נוסף'); }
+  if (f.dataset.f === 'dir'){ UI.dirAddOpen = false; Store.set('directory', Store.newId('directory'), {name:fd.name.trim(), role:fd.role.trim(), phone:fd.phone.trim(), email:fd.email.trim(), createdAt:Date.now()}); f.reset(); toast('איש הקשר נוסף'); }
 });
 document.addEventListener('input', e => {
   const qp = e.target.dataset && e.target.dataset.q;
