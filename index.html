@@ -122,6 +122,11 @@ main{max-width:1100px;margin:0 auto;padding:22px 20px 80px}
 .sigpad{border:1px dashed #b9b3a5;border-radius:8px;background:#fffefb;touch-action:none;width:100%;max-width:420px;height:130px;display:block;cursor:crosshair}
 .qitem{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
 .qitem .qn{min-width:36px;font-weight:700;padding-top:9px;color:var(--ink2)}
+.qmv{display:inline-flex;flex-direction:column;gap:2px;margin-top:2px}
+.qmv button{border:1px solid var(--line);background:#fff;border-radius:5px;width:26px;height:19px;font-size:10px;line-height:1;color:var(--ink2);padding:0}
+.qmv button:hover:not(:disabled){border-color:var(--accent);color:var(--accent-dark);background:var(--accent-soft)}
+.qmv button:disabled{opacity:.3;cursor:default}
+.qpay .qmv{vertical-align:middle;margin-left:2px}
 .qitem textarea{flex:1;min-height:42px}
 .qauto{flex:1;background:var(--soft);border-radius:8px;padding:9px 11px;color:var(--ink2)}
 table.qpay{width:100%;border-collapse:collapse}
@@ -1228,8 +1233,11 @@ function newQuote(typeId){
   const t = QTYPES.find(x => x.id === typeId);
   return {type:typeId, toName:'', toLine2:'', address:'', projectId:'', date:today(), total:'', scope:t.scope.slice(),
     changes:Q_COMMON.changes, sup:Q_COMMON.sup, costExtra:[], declaration:Q_COMMON.declaration,
-    pay:t.pay.map(([d,p]) => ({d, p})), payMethods:Q_COMMON.payMethods, extra:[]};
+    pay:t.pay.map(([d,p]) => ({d, p})), payMethods:Q_COMMON.payMethods, extra:[],
+    s4intro:Q_FIXED.s4intro, s4:Q_FIXED.s4.slice(), s5:Q_FIXED.s5.slice()};
 }
+// הצעות ישנות (לפני שסעיפים 4–5 נהיו ניתנים לעריכה) מקבלות את ברירת המחדל
+function qNorm(q){ if (!q) return q; if (q.s4intro == null) q.s4intro = Q_FIXED.s4intro; if (!Array.isArray(q.s4)) q.s4 = Q_FIXED.s4.slice(); if (!Array.isArray(q.s5)) q.s5 = Q_FIXED.s5.slice(); return q; }
 function saveQDraft(){ try { localStorage.setItem(QDRAFT, JSON.stringify(UI.q)); } catch(e){} }
 function loadQDraft(){ try { return JSON.parse(localStorage.getItem(QDRAFT) || 'null'); } catch(e){ return null; } }
 const nf = n => (Math.round(Number(n)||0)).toLocaleString('he-IL');
@@ -1237,7 +1245,7 @@ const qTotal = q => Math.max(0, Number(String(q.total).replace(/[^\d.]/g, '')) |
 const qPctSum = q => q.pay.reduce((a, r) => a + (Number(r.p)||0), 0);
 function qAmounts(q){ const T = qTotal(q); return q.pay.map(r => Math.round(T * (Number(r.p)||0) / 100)); }
 function supRef(q){ const i = q.scope.findIndex(s => /פיקוח/.test(s)); return '1.' + (i >= 0 ? i + 1 : q.scope.length); }
-function qScopeText(q, s){ const a = (q.address||'').trim(); return a ? s.replace(/\{כתובת\}/g, a) : s.replace(/\s*ב?\{כתובת\}/g, ''); }
+function qScopeText(q, s){ const a = (q.address||'').trim(); return a ? s.replace(/\{כתובת\}/g, a) : s.replace(/,?\s*ב?\{כתובת\}/g, ''); }
 function qCost1(q){ const n = q.scope.filter(s => s.trim()).length; return `עלות סעיפים 1.1-1.${n} הינה **${nf(qTotal(q))} ₪**, בתוספת מע"מ ע"פ חוק.`; }
 
 /* --- טופס --- */
@@ -1285,10 +1293,13 @@ function quoteMain(){
     ${d ? `<div class="hint" style="margin:0 0 14px;display:flex;align-items:center;gap:10px">יש טיוטה שלא הסתיימה${d.toName ? ` (לכבוד: ${esc(d.toName)})` : ''}.<button class="btn sm accent" data-a="qresume">המשך טיוטה</button></div>` : ''}
     <div class="tplcards">${QTYPES.map(t => `<button class="tplcard" data-a="qtype" data-v="${t.id}"><span class="ti" style="background:var(--accent-soft);color:var(--amber)">₪</span><span><h3>${esc(t.title)}</h3><span class="muted sm">${esc(t.desc)}</span></span></button>`).join('')}</div>`;
   }
+  qNorm(q);
   const T = qTotal(q), am = qAmounts(q), sum = qPctSum(q), tt = QTYPES.find(x => x.id === q.type);
   const projs = S.projects.filter(p => !p.done && !isInsp(p));
   const ta = (path, v, rows=2, ph='') => `<textarea class="in" rows="${rows}" data-q="${path}" placeholder="${esc(ph)}">${esc(v)}</textarea>`;
-  const item = (num, path, v, delAct, ph) => `<div class="qitem"><span class="qn">${num}</span>${ta(path, v, 2, ph)}${delAct ? `<button type="button" class="icon" data-a="${delAct}" title="מחק סעיף">${TRASH}</button>` : '<span style="width:32px"></span>'}</div>`;
+  const mv = (l, i, n) => n > 1 ? `<span class="qmv"><button type="button" data-a="qmove" data-l="${l}" data-i="${i}" data-d="-1" ${i===0?'disabled':''} title="הזז למעלה">▲</button><button type="button" data-a="qmove" data-l="${l}" data-i="${i}" data-d="1" ${i===n-1?'disabled':''} title="הזז למטה">▼</button></span>` : '';
+  // סעיף: מספר, טקסט, חיצים לשינוי סדר, מחיקה
+  const item = (num, path, v, l, i, n, ph) => `<div class="qitem"><span class="qn">${num}</span>${ta(path, v, 2, ph)}${l ? mv(l, i, n) + `<button type="button" class="icon" data-a="qdel" data-l="${l}" data-i="${i}" title="מחק סעיף">${TRASH}</button>` : '<span style="width:32px"></span>'}</div>`;
   return `<button class="btn link" data-a="docs">→ חזרה למסמכים</button>
   <div class="ptop"><div style="flex:1"><h1>הצעת מחיר — ${esc(tt ? tt.title : '')}</h1><div class="muted sm">הטיוטה נשמרת אוטומטית במחשב הזה.</div></div>
     <button class="btn sm" data-a="qreset">התחל הצעה חדשה</button></div>
@@ -1303,7 +1314,7 @@ function quoteMain(){
       </div></div>
 
     <div class="fs"><h2>1. תכולת ההצעה</h2>
-      ${q.scope.map((s,i) => item('1.' + (i+1), 'scope.' + i, s, 'qdel" data-l="scope" data-i="' + i, 'תיאור העבודה…')).join('')}
+      ${q.scope.map((s,i) => item('1.' + (i+1), 'scope.' + i, s, 'scope', i, q.scope.length, 'תיאור העבודה…')).join('')}
       <button type="button" class="btn sm" data-a="qadd" data-l="scope">+ הוסף סעיף</button></div>
 
     <div class="fs"><h2>2. עלויות</h2>
@@ -1313,30 +1324,33 @@ function quoteMain(){
       ${item('2.2', 'changes', q.changes)}
       ${item('2.3', 'sup', q.sup)}
       <div class="muted sm" style="margin:-2px 0 8px 0;padding-right:44px">{סעיף פיקוח} יוחלף אוטומטית במספר סעיף הפיקוח (כרגע: <b id="qSupRef">${supRef(q)}</b>).</div>
-      ${q.costExtra.map((s,i) => item('2.' + (i+4), 'costExtra.' + i, s, 'qdel" data-l="costExtra" data-i="' + i)).join('')}
+      ${q.costExtra.map((s,i) => item('2.' + (i+4), 'costExtra.' + i, s, 'costExtra', i, q.costExtra.length)).join('')}
       <button type="button" class="btn sm" data-a="qadd" data-l="costExtra">+ הוסף סעיף</button>
       <div class="qitem" style="margin-top:10px"><span class="qn">•</span>${ta('declaration', q.declaration)}<span style="width:32px"></span></div></div>
 
     <div class="fs"><h2>3. תנאי תשלום</h2>
-      <table class="qpay"><thead><tr><th>שלב</th><th style="width:90px">אחוז</th><th style="width:120px">סכום</th><th style="width:36px"></th></tr></thead><tbody>
+      <table class="qpay"><thead><tr><th>שלב</th><th style="width:90px">אחוז</th><th style="width:120px">סכום</th><th style="width:84px"></th></tr></thead><tbody>
         ${q.pay.map((r,i) => `<tr><td><input class="in" data-q="pay.${i}.d" value="${esc(r.d)}" placeholder="תיאור השלב"></td>
           <td><div class="pctin"><input class="in" data-q="pay.${i}.p" value="${esc(r.p)}" inputmode="decimal"><span>%</span></div></td>
           <td class="qamt" data-row="${i}">${nf(am[i])} ₪</td>
-          <td><button type="button" class="icon" data-a="qdel" data-l="pay" data-i="${i}" title="מחק שלב">${TRASH}</button></td></tr>`).join('')}
+          <td style="white-space:nowrap">${mv('pay', i, q.pay.length)}<button type="button" class="icon" data-a="qdel" data-l="pay" data-i="${i}" title="מחק שלב">${TRASH}</button></td></tr>`).join('')}
         <tr class="qtot"><td>סה"כ</td><td id="qPctSum" class="${sum===100?'':'bad'}">${sum}%</td><td id="qTotAmt">${nf(T)} ₪</td><td></td></tr>
       </tbody></table>
       <div id="qPctWarn" class="chip red" style="margin-top:8px;${sum===100?'display:none':''}">סכום האחוזים חייב להיות 100% (כרגע ${sum}%)</div>
       <div style="margin-top:10px"><button type="button" class="btn sm" data-a="qadd" data-l="pay">+ הוסף שלב תשלום</button></div>
       <div class="qitem" style="margin-top:12px"><span class="qn">•</span>${ta('payMethods', q.payMethods, 1)}<span style="width:32px"></span></div></div>
 
-    <div class="fs qfixed"><h2>4. תנאים והבהרות <span class="chip">קבוע בכל ההצעות</span></h2>
-      <div class="sm">${esc(Q_FIXED.s4intro)}</div><div class="sm" style="line-height:1.8;color:var(--ink2);margin-top:4px">${Q_FIXED.s4.map((x, i) => `<div><b>4.${i+1}</b> ${esc(x)}</div>`).join('')}</div></div>
-    <div class="fs qfixed"><h2>5. הערות כלליות <span class="chip">קבוע בכל ההצעות</span></h2>
-      <div class="sm" style="line-height:1.8;color:var(--ink2);margin-top:4px">${Q_FIXED.s5.map((x, i) => `<div><b>5.${i+1}</b> ${esc(x)}</div>`).join('')}</div></div>
+    <div class="fs"><h2 class="row"><span style="flex:1">4. תנאים והבהרות</span>${qIsDef(q, 's4') ? '' : `<button type="button" class="btn sm" data-a="qdefsec" data-s="s4">↺ שחזר נוסח קבוע</button>`}</h2>
+      <div class="qitem"><span class="qn"></span>${ta('s4intro', q.s4intro, 1, 'משפט פתיחה (לא חובה)')}<span style="width:32px"></span></div>
+      ${q.s4.map((s,i) => item('4.' + (i+1), 's4.' + i, s, 's4', i, q.s4.length)).join('')}
+      <button type="button" class="btn sm" data-a="qadd" data-l="s4">+ הוסף סעיף</button></div>
+    <div class="fs"><h2 class="row"><span style="flex:1">5. הערות כלליות</span>${qIsDef(q, 's5') ? '' : `<button type="button" class="btn sm" data-a="qdefsec" data-s="s5">↺ שחזר נוסח קבוע</button>`}</h2>
+      ${q.s5.map((s,i) => item('5.' + (i+1), 's5.' + i, s, 's5', i, q.s5.length)).join('')}
+      <button type="button" class="btn sm" data-a="qadd" data-l="s5">+ הוסף סעיף</button></div>
 
     ${q.extra.map((sec, si) => `<div class="fs"><h2 class="row"><span>${6+si}.</span><input class="in" data-q="extra.${si}.title" value="${esc(sec.title)}" placeholder="כותרת הסעיף" style="flex:1;font-weight:700">
-        <button type="button" class="icon" data-a="qdelsec" data-i="${si}" title="מחק את כל הסעיף">${TRASH}</button></h2>
-      ${sec.items.map((s,i) => item(`${6+si}.${i+1}`, `extra.${si}.items.${i}`, s, `qdel" data-l="extra.${si}.items" data-i="${i}`, 'טקסט חופשי…')).join('')}
+        ${mv('extra', si, q.extra.length)}<button type="button" class="icon" data-a="qdelsec" data-i="${si}" title="מחק את כל הסעיף">${TRASH}</button></h2>
+      ${sec.items.map((s,i) => item(`${6+si}.${i+1}`, `extra.${si}.items.${i}`, s, `extra.${si}.items`, i, sec.items.length, 'טקסט חופשי…')).join('')}
       <button type="button" class="btn sm" data-a="qadd" data-l="extra.${si}.items">+ הוסף סעיף</button></div>`).join('')}
     <button type="button" class="btn" data-a="qaddsec" style="margin-bottom:14px">+ הוסף סעיף ${6 + q.extra.length} (טקסט חופשי)</button>
 
@@ -1346,6 +1360,7 @@ function quoteMain(){
     </div>
   </form>`;
 }
+function qIsDef(q, k){ return JSON.stringify(q[k]) === JSON.stringify(Q_FIXED[k]) && (k !== 's4' || q.s4intro === Q_FIXED.s4intro); }
 function rerenderQuote(){ const y = window.scrollY; $('#main').innerHTML = quoteView(); window.scrollTo(0, y); }
 function sqDownload(name, bytes){ const url = URL.createObjectURL(new Blob([bytes], {type:'application/pdf'})); const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000); }
 function setQPath(path, v){
@@ -1501,12 +1516,18 @@ async function buildQuotePdfK(q, k, allowBreak, sp = 1){
   y += 12*ks;
   if (q.payMethods.trim()) para(q.payMethods, {num:'•', numX:R - 22, textX:R - 36});
   // 4
-  heading(4, 'תנאים והבהרות');
-  para(Q_FIXED.s4intro, {textX:R - 30, gap:2*ks});
-  Q_FIXED.s4.forEach((s, i) => para(s, {num:`4.${i+1}`, gap:2*ks}));
+  qNorm(q);
+  const s4 = q.s4.filter(x => x.trim()), s5 = q.s5.filter(x => x.trim());
+  if (q.s4intro.trim() || s4.length){
+    heading(4, 'תנאים והבהרות');
+    if (q.s4intro.trim()) para(q.s4intro, {textX:R - 30, gap:2*ks});
+    s4.forEach((s, i) => para(s, {num:`4.${i+1}`, gap:2*ks}));
+  }
   // 5
-  heading(5, 'הערות כלליות');
-  Q_FIXED.s5.forEach((s, i) => para(s, {num:`5.${i+1}`}));
+  if (s5.length){
+    heading(5, 'הערות כלליות');
+    s5.forEach((s, i) => para(s, {num:`5.${i+1}`}));
+  }
   // 6+
   q.extra.forEach((sec, si) => {
     const items = sec.items.filter(s => s.trim()); if (!sec.title.trim() && !items.length) return;
@@ -1670,7 +1691,7 @@ function setDone(id, done){
   toast(done ? `"${p.name}" סומן כהושלם` : `"${p.name}" חזר לפעילות`, {label:'בטל', fn:() => { const q = S.projects.find(x => x.id === id); if (q) upd(q, {done:!done, doneAt: !done ? Date.now() : null}); }});
 }
 
-const READONLY_OK = new Set(['sqdl','openx','dirsort','sitefolder','ninjaxls','dirf','sortby','dupopen','pqgo','qtype','qresume','qreset','qadd','qdel','qaddsec','qdelsec','docs','opentpl','sigclear','sitefilter','home','tab','donetab','insptab','addxcrow','delxcrow','open','openx','calendar','directory','close','day','mon','copy','viewdoc','dldoc','opener','logout']);
+const READONLY_OK = new Set(['qmove','sqdl','openx','dirsort','sitefolder','ninjaxls','dirf','sortby','dupopen','pqgo','qtype','qresume','qreset','qadd','qdel','qaddsec','qdelsec','docs','opentpl','sigclear','sitefilter','home','tab','donetab','insptab','addxcrow','delxcrow','open','openx','calendar','directory','close','day','mon','copy','viewdoc','dldoc','opener','logout']);
 const A = {
   home: () => { closeOv(); go(''); },
   tab: el => { closeOv(); go('stage-' + (+el.dataset.i + 1)); },
@@ -1727,9 +1748,13 @@ const A = {
   sqdup: el => { const x = S.quotes.find(z => z.id === el.dataset.id); if (!x || !x.q) return; UI.q = Object.assign(JSON.parse(JSON.stringify(x.q)), {date: today()}); saveQDraft(); rerenderQuote(); window.scrollTo(0,0); toast('נפתח עותק לעריכה — התאריך עודכן להיום'); },
   sqdel: el => { const x = S.quotes.find(z => z.id === el.dataset.id); if (!x) return; confirmOv(`למחוק את הצעת המחיר ל"${x.toName}" מהרשימה?`, () => { if (x.fid && !S.projects.some(p => (p.docs||[]).some(d => d.fid === x.fid))) deleteFile(x.fid); Store.remove('quotes', x.id); }); },
   qtype: el => { UI.q = newQuote(el.dataset.v); saveQDraft(); rerenderQuote(); window.scrollTo(0,0); },
-  qresume: () => { UI.q = loadQDraft(); rerenderQuote(); },
+  qdefsec: el => { const k = el.dataset.s; UI.q[k] = Q_FIXED[k].slice(); if (k === 's4') UI.q.s4intro = Q_FIXED.s4intro; saveQDraft(); rerenderQuote(); },
+  qresume: () => { UI.q = qNorm(loadQDraft()); rerenderQuote(); },
   qreset: () => formOv({title:'הצעה חדשה', ok:'התחל מחדש', danger:true, body:'<p style="margin:0">הטיוטה הנוכחית תימחק. להמשיך?</p>', onOk: () => { UI.q = null; try { localStorage.removeItem(QDRAFT); } catch(e){} rerenderQuote(); window.scrollTo(0,0); }}),
   qadd: el => { const l = el.dataset.l; if (l === 'pay') UI.q.pay.push({d:'', p:0}); else getQList(l).push(''); saveQDraft(); rerenderQuote(); },
+  qmove: el => { const a = getQList(el.dataset.l), i = +el.dataset.i, j = i + (+el.dataset.d); if (j < 0 || j >= a.length) return;
+      [a[i], a[j]] = [a[j], a[i]]; saveQDraft(); rerenderQuote();
+      const b = document.querySelector(`[data-a=qmove][data-l="${el.dataset.l}"][data-i="${j}"][data-d="${el.dataset.d}"]`) || document.querySelector(`[data-a=qmove][data-l="${el.dataset.l}"][data-i="${j}"]`); if (b && !b.disabled) b.focus(); },
   qdel: el => { getQList(el.dataset.l).splice(+el.dataset.i, 1); saveQDraft(); rerenderQuote(); },
   qaddsec: () => { UI.q.extra.push({title:'', items:['']}); saveQDraft(); rerenderQuote(); },
   qdelsec: el => { UI.q.extra.splice(+el.dataset.i, 1); saveQDraft(); rerenderQuote(); },
