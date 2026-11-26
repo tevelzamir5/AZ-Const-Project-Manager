@@ -1330,9 +1330,9 @@ function quoteMain(){
       <div class="qitem" style="margin-top:12px"><span class="qn">•</span>${ta('payMethods', q.payMethods, 1)}<span style="width:32px"></span></div></div>
 
     <div class="fs qfixed"><h2>4. תנאים והבהרות <span class="chip">קבוע בכל ההצעות</span></h2>
-      <div class="sm">${esc(Q_FIXED.s4intro)}</div><ul class="sm">${Q_FIXED.s4.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+      <div class="sm">${esc(Q_FIXED.s4intro)}</div><div class="sm" style="line-height:1.8;color:var(--ink2);margin-top:4px">${Q_FIXED.s4.map((x, i) => `<div><b>4.${i+1}</b> ${esc(x)}</div>`).join('')}</div></div>
     <div class="fs qfixed"><h2>5. הערות כלליות <span class="chip">קבוע בכל ההצעות</span></h2>
-      <ol class="sm">${Q_FIXED.s5.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>
+      <div class="sm" style="line-height:1.8;color:var(--ink2);margin-top:4px">${Q_FIXED.s5.map((x, i) => `<div><b>5.${i+1}</b> ${esc(x)}</div>`).join('')}</div></div>
 
     ${q.extra.map((sec, si) => `<div class="fs"><h2 class="row"><span>${6+si}.</span><input class="in" data-q="extra.${si}.title" value="${esc(sec.title)}" placeholder="כותרת הסעיף" style="flex:1;font-weight:700">
         <button type="button" class="icon" data-a="qdelsec" data-i="${si}" title="מחק את כל הסעיף">${TRASH}</button></h2>
@@ -1386,7 +1386,15 @@ function richItems(text, base={}){
   String(text).split('**').forEach((part, i) => { if (i > 0) bold = !bold; for (const c of part) out.push(Object.assign({c, b: bold || !!base.b, u: !!base.u})); });
   return out;
 }
+// הצעת המחיר תמיד בעמוד אחד: מקטינים את הגופן והמרווחים בהדרגה עד שהכל נכנס
+// קודם מצמצמים רווחים בין שורות, ורק אחר כך מקטינים את הגופן
 async function buildQuotePdf(q){
+  for (let k = 1; k >= 0.6; k = Math.round((k - 0.03) * 100) / 100)
+    for (const sp of [1, 0.9, 0.8]){ const r = await buildQuotePdfK(q, k, false, sp); if (r) return r; }
+  return await buildQuotePdfK(q, 0.6, true, 0.8);
+}
+async function buildQuotePdfK(q, k, allowBreak, sp = 1){
+  const ks = k * sp; // מקדם לרווחים
   const {PDFLib, fontkit} = await getPdfLib();
   const doc = await PDFLib.PDFDocument.create(); doc.registerFontkit(fontkit);
   const FR = await doc.embedFont(b64bytes(DAVID_R), {subset:true}), FB = await doc.embedFont(b64bytes(DAVID_B), {subset:true}), FH = await doc.embedFont(b64bytes(HEEBO_TTF), {subset:true});
@@ -1396,8 +1404,8 @@ async function buildQuotePdf(q){
   const has = (f, c) => { try { return f.embedder.font.hasGlyphForCodePoint(c.codePointAt(0)); } catch(e){ return true; } };
   const fontOf = it => { if (it.c === '•') return FH; const f = it.b ? FB : FR; return has(f, it.c) ? f : FH; };
   const cw = (it, sz) => fontOf(it).widthOfTextAtSize(it.c, sz);
-  const W = 595.28, H = 841.89, R = 505, L = 90, TOP = 92, BOTTOM = 692;
-  let page, y;
+  const W = 595.28, H = 841.89, R = 505, L = 90, TOP = 86, BOTTOM = 698;
+  let page, y, overflow = false;
   // ציור שורה (פריטים בסדר לוגי) — יישור לימין או למרכז
   function drawLine(items, xRight, yTop, sz, opt={}){
     const vis = bidiItems(items);
@@ -1440,23 +1448,23 @@ async function buildQuotePdf(q){
     drawLine(richItems(Q_FIXED.email), 350, 800, 11);
   }
   function newPage(){ const p = doc.addPage([W, H]); decorate(p); y = TOP; }
-  function need(h){ if (y + h > BOTTOM) newPage(); }
-  const LH = 19, SZ = 12;
+  function need(h){ if (y + h > BOTTOM){ if (allowBreak) newPage(); else overflow = true; } }
+  const LH = 19 * ks, SZ = 12 * k;
   // פסקה: מספר/תבליט מימין, טקסט עטוף
-  function para(text, {num='', numX=R, textX=R-30, sz=SZ, gap=4, base={}} = {}){
+  function para(text, {num='', numX=R, textX=R-30, sz=SZ, gap=4*ks, base={}} = {}){
     const lines = wrap(richItems(text, base), textX - L, sz);
     lines.forEach((ln, i) => { need(LH); if (i === 0 && num) drawLine(richItems(num), numX, y + sz, num === '•' ? sz + 3 : sz); drawLine(ln, textX, y + sz, sz); y += LH; });
     y += gap;
   }
-  function heading(n, title){ need(LH * 2); y += 4; drawLine(richItems(n + '.'), R - 4, y + SZ, SZ); drawLine(richItems(title, {u:true}), R - 30, y + SZ, SZ); y += LH + 2; }
+  function heading(n, title){ need(LH * 2); y += 4*ks; drawLine(richItems(n + '.'), R - 4, y + SZ, SZ); drawLine(richItems(title, {u:true}), R - 30, y + SZ, SZ); y += LH + 2*ks; }
 
   newPage();
   // לכבוד
   const toLines = [q.toName.trim(), (q.toLine2||'').trim()].filter(Boolean);
-  drawLine(richItems('לכבוד: ').concat(richItems(toLines[0] || '', {u:true})), R, y + SZ, SZ); y += LH + 4;
+  drawLine(richItems('לכבוד: ').concat(richItems(toLines[0] || '', {u:true})), R, y + SZ, SZ); y += LH + 4*ks;
   if (toLines[1]){ drawLine(richItems(toLines[1], {u:true}), R - 36, y + SZ, SZ); y += LH; }
-  y += 22;
-  drawLine(richItems('הנדון - הצעת מחיר תכנון קונסטרוקציה.', {b:true, u:true}), 0, y + 14, 14, {center: W/2}); y += 34;
+  y += 18*ks;
+  drawLine(richItems('הנדון - הצעת מחיר תכנון קונסטרוקציה.', {b:true, u:true}), 0, y + 14*k, 14*k, {center: W/2}); y += 30*ks;
   // 1
   heading(1, 'תכולת ההצעה:');
   const scope = q.scope.filter(s => s.trim());
@@ -1467,35 +1475,35 @@ async function buildQuotePdf(q){
   costs.forEach((s, i) => para(s, {num:`2.${i+1}`}));
   if (q.declaration.trim()) para(q.declaration, {num:'•', numX:R - 22, textX:R - 36, base:{u:true}});
   // 3
-  const am = qAmounts(q), rowH = 19, tL = 126, tR = 535, c1 = 228, c2 = 282;
+  const am = qAmounts(q), rowH = 18 * k * (0.55 + 0.45 * sp), tL = 126, tR = 535, c1 = 228, c2 = 282;
   const rows = q.pay.filter(r => String(r.d).trim() || Number(r.p));
   need(LH * 2 + rowH * (rows.length + 1) + 16);
   heading(3, 'תנאי תשלום');
-  y += 6;
+  y += 6*ks;
   const tableTop = y;
   rows.forEach((r, i) => {
     const idx = q.pay.indexOf(r);
-    drawLine(richItems(String(r.d).trim().replace(/\.?$/, '.')), tR - 6, y + 13.5, 11.5);
-    drawLine(richItems((Number(r.p)||0) + '%'), c2 - 8, y + 13.5, 11.5);
-    drawLine(richItems(nf(am[idx]) + ' ₪.'), c1 - 8, y + 13.5, 11.5);
+    drawLine(richItems(String(r.d).trim().replace(/\.?$/, '.')), tR - 6, y + 13.5*k, 11.5*k);
+    drawLine(richItems((Number(r.p)||0) + '%'), c2 - 8, y + 13.5*k, 11.5*k);
+    drawLine(richItems(nf(am[idx]) + ' ₪.'), c1 - 8, y + 13.5*k, 11.5*k);
     y += rowH;
   });
-  drawLine(richItems('סה"כ', {b:true}), tR - 6, y + 15, 12);
-  drawLine(richItems(qPctSum(q) + '%', {b:true}), c2 - 8, y + 15, 12);
-  drawLine(richItems(nf(qTotal(q)) + ' ₪.', {b:true}), c1 - 8, y + 15, 13);
-  y += rowH + 3;
+  drawLine(richItems('סה"כ', {b:true}), tR - 6, y + 15*k, 12*k);
+  drawLine(richItems(qPctSum(q) + '%', {b:true}), c2 - 8, y + 15*k, 12*k);
+  drawLine(richItems(nf(qTotal(q)) + ' ₪.', {b:true}), c1 - 8, y + 15*k, 13*k);
+  y += rowH + 3*k;
   const yT = H - tableTop, yB = H - y;
   page.drawRectangle({x:tL, y:yB, width:tR - tL, height:yT - yB, borderWidth:0.8, borderColor:black});
   page.drawLine({start:{x:c1, y:yT}, end:{x:c1, y:yB}, thickness:0.6, color:black});
   page.drawLine({start:{x:c2, y:yT}, end:{x:c2, y:yB}, thickness:0.6, color:black});
-  page.drawLine({start:{x:tL, y:yB + rowH + 3}, end:{x:tR, y:yB + rowH + 3}, thickness:1.2, color:black});
+  page.drawLine({start:{x:tL, y:yB + rowH + 3*k}, end:{x:tR, y:yB + rowH + 3*k}, thickness:1.2, color:black});
   for (let i = 1; i < rows.length; i++) page.drawLine({start:{x:tL, y:yT - i*rowH}, end:{x:tR, y:yT - i*rowH}, thickness:0.4, color:black});
-  y += 14;
+  y += 12*ks;
   if (q.payMethods.trim()) para(q.payMethods, {num:'•', numX:R - 22, textX:R - 36});
   // 4
   heading(4, 'תנאים והבהרות');
-  para(Q_FIXED.s4intro, {textX:R - 30, gap:2});
-  Q_FIXED.s4.forEach(s => para(s, {num:'•', numX:R - 22, textX:R - 36, gap:2}));
+  para(Q_FIXED.s4intro, {textX:R - 30, gap:2*ks});
+  Q_FIXED.s4.forEach((s, i) => para(s, {num:`4.${i+1}`, gap:2*ks}));
   // 5
   heading(5, 'הערות כלליות');
   Q_FIXED.s5.forEach((s, i) => para(s, {num:`5.${i+1}`}));
@@ -1505,6 +1513,7 @@ async function buildQuotePdf(q){
     heading(6 + si, sec.title.trim() || 'סעיפים נוספים');
     items.forEach((s, i) => para(s, {num:`${6+si}.${i+1}`}));
   });
+  if (overflow && !allowBreak) return null;
   return await doc.save();
 }
 async function submitQuote(){
